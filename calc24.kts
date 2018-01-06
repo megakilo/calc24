@@ -1,29 +1,42 @@
-fun comb(nums: List<Int>, n: Int): List<List<Int>> {
-    if (n == 0) return listOf(emptyList())
-    if (nums.size <= n) return listOf(nums)
-    val tail = nums.subList(1, nums.size)
-    return comb(tail, n) + comb(tail, n-1).map { xs -> xs + nums[0] }
+import java.util.*
+
+typealias Number = Pair<Float, String>
+
+fun <T> split(nums: List<T>, n: Int): List<Pair<List<T>, List<T>>> {
+    if (n == 0) return listOf(Pair(emptyList(), nums))
+    if (nums.size <= n) return listOf(Pair(nums, emptyList()))
+    val head = nums.first()
+    val tail = nums.drop(1)
+    return split(tail, n).map { pair -> Pair(pair.first, pair.second + head) } +
+            split(tail, n-1).map { pair -> Pair(pair.first + head, pair.second) }
 }
 
-fun combine2(nums: List<Float>): List<Float> {
-    return listOf(nums[0] + nums[1], nums[0] * nums[1], nums[0] - nums[1], nums[1] - nums[0]) +
-            (if (nums[1] != 0f) listOf(nums[0] / nums[1]) else emptyList()) +
-            (if (nums[0] != 0f) listOf(nums[1] / nums[0]) else emptyList())
+fun combine2(nums: List<Number>): List<Number> = listOf(
+        Number(nums[0].first + nums[1].first, "(${nums[0].second} + ${nums[1].second})"),
+        Number(nums[0].first * nums[1].first, "(${nums[0].second} * ${nums[1].second})")) +
+        (if (nums[0].first > nums[1].first)
+            listOf(Number(nums[0].first - nums[1].first, "(${nums[0].second} - ${nums[1].second})"))
+        else
+            listOf(Number(nums[1].first - nums[0].first, "(${nums[1].second} - ${nums[0].second})"))) +
+        (if (nums[1].first != 0f)
+            listOf(Number(nums[0].first / nums[1].first, "(${nums[0].second} / ${nums[1].second})"))
+        else emptyList()) +
+        (if (nums[0].first != 0f)
+            listOf(Number(nums[1].first / nums[0].first, "(${nums[1].second} / ${nums[0].second})"))
+        else emptyList())
+
+fun reduce(nums: List<Number>): Sequence<List<Number>> = split(nums, 2).asSequence().flatMap { pair ->
+    combine2(pair.first).map { i -> pair.second + i }.asSequence()
 }
 
-fun reduce(nums: List<Float>): List<List<Float>> {
-    val all = (0 until nums.size).toList()
-    return comb(all, 2).flatMap { indexes ->
-        val taken = indexes.map { i -> nums[i] }
-        val nontaken = (all - indexes).map { i -> nums[i] }
-        combine2(taken).map { i -> nontaken + i}
-    }
+fun calc(nums: List<Number>): Sequence<Number> {
+    if (nums.size == 1) return nums.asSequence()
+    return reduce(nums).flatMap { xs -> calc(xs) }
 }
 
-fun calc(nums: List<Float>, target: Float): Boolean {
-    if (nums.size == 1) return nums[0] == target
-    return reduce(nums).any { xs -> calc(xs, target) }
+val rand = Random()
+(1..100).forEach {
+    val numbers = (1..4).map{ rand.nextInt(13) + 1}
+    val result = calc(numbers.map{Number(it.toFloat(), it.toString())}).find{it.first == 24f}?.second ?: "No Solution"
+    println("numbers: $numbers; solution: $result")
 }
-
-val input = listOf(3f,3f,7f,7f)
-println(calc(input, 24f))
