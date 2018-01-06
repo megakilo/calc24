@@ -2,31 +2,31 @@ import java.util.*
 
 typealias Number = Pair<Float, String>
 
-fun <T> split(nums: List<T>, n: Int): List<Pair<List<T>, List<T>>> {
-    if (n == 0) return listOf(Pair(emptyList(), nums))
-    if (nums.size <= n) return listOf(Pair(nums, emptyList()))
+fun <T> split(nums: List<T>, n: Int): Sequence<Pair<List<T>, List<T>>> {
+    if (n == 0) return sequenceOf(Pair(emptyList(), nums))
+    if (nums.size <= n) return sequenceOf(Pair(nums, emptyList()))
     val head = nums.first()
     val tail = nums.drop(1)
     return split(tail, n).map { pair -> Pair(pair.first, pair.second + head) } +
             split(tail, n-1).map { pair -> Pair(pair.first + head, pair.second) }
 }
 
-fun combine2(nums: List<Number>): List<Number> = listOf(
+fun combine2(nums: List<Number>): Sequence<Number> = sequenceOf(
         Number(nums[0].first + nums[1].first, "(${nums[0].second} + ${nums[1].second})"),
         Number(nums[0].first * nums[1].first, "(${nums[0].second} * ${nums[1].second})")) +
         (if (nums[0].first > nums[1].first)
-            listOf(Number(nums[0].first - nums[1].first, "(${nums[0].second} - ${nums[1].second})"))
+            sequenceOf(Number(nums[0].first - nums[1].first, "(${nums[0].second} - ${nums[1].second})"))
         else
-            listOf(Number(nums[1].first - nums[0].first, "(${nums[1].second} - ${nums[0].second})"))) +
+            sequenceOf(Number(nums[1].first - nums[0].first, "(${nums[1].second} - ${nums[0].second})"))) +
         (if (nums[1].first != 0f)
-            listOf(Number(nums[0].first / nums[1].first, "(${nums[0].second} / ${nums[1].second})"))
-        else emptyList()) +
+            sequenceOf(Number(nums[0].first / nums[1].first, "(${nums[0].second} / ${nums[1].second})"))
+        else emptySequence()) +
         (if (nums[0].first != 0f)
-            listOf(Number(nums[1].first / nums[0].first, "(${nums[1].second} / ${nums[0].second})"))
-        else emptyList())
+            sequenceOf(Number(nums[1].first / nums[0].first, "(${nums[1].second} / ${nums[0].second})"))
+        else emptySequence())
 
 fun reduce(nums: List<Number>): Sequence<List<Number>> = split(nums, 2).asSequence().flatMap { pair ->
-    combine2(pair.first).map { i -> pair.second + i }.asSequence()
+    combine2(pair.first).map { i -> pair.second + i }
 }
 
 fun calc(nums: List<Number>): Sequence<Number> {
