@@ -25,7 +25,7 @@ fun combine2(nums: List<Number>): Sequence<Number> = sequenceOf(
             sequenceOf(Number(nums[1].first / nums[0].first, "(${nums[1].second} / ${nums[0].second})"))
         else emptySequence())
 
-fun reduce(nums: List<Number>): Sequence<List<Number>> = split(nums, 2).asSequence().flatMap { pair ->
+fun reduce(nums: List<Number>): Sequence<List<Number>> = split(nums, 2).flatMap { pair ->
     combine2(pair.first).map { i -> pair.second + i }
 }
 
@@ -38,5 +38,5 @@ val rand = Random()
 (1..100).forEach {
     val numbers = (1..4).map{ rand.nextInt(13) + 1}
     val result = calc(numbers.map{Number(it.toFloat(), it.toString())}).find{it.first == 24f}?.second ?: "No Solution"
-    println("numbers: $numbers; solution: $result")
+    println("$numbers -> $result")
 }
