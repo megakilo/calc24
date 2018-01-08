@@ -3,24 +3,21 @@ import Data.List (find)
 import System.Random (randomRIO)
 import Text.Printf
 
-data Number = Number
-  { getValue :: Float
-  , getExpr :: String
-  } deriving (Show, Eq)
+type Number = (Float, String)
 
 main :: IO ()
 main =
   replicateM_ 100 $ do
     nums <- randomList 4
-    case find (\x -> getValue x == 24) $ calc nums of
-      Just n -> print $ getExpr n
+    case find (\x -> fst x == 24) $ calc nums of
+      Just n -> print $ snd n
       Nothing -> print "No Solution"
 
 randomList :: Int -> IO [Number]
 randomList n = do
   nums <- replicateM n $ randomRIO (1, 13 :: Integer)
   print nums
-  return (map (\x -> Number (fromInteger x) (show x)) nums)
+  return (map (\x -> (fromInteger x, show x)) nums)
 
 calc :: [Number] -> [Number]
 calc xs
@@ -44,12 +41,12 @@ split2 xs n
       (split2 (tail xs) (n - 1))
 
 combine2 :: [Number] -> [Number]
-combine2 [Number x xstr, Number y ystr] =
-  [ Number (x + y) (printf "(%s + %s)" xstr ystr)
-  , Number (x * y) (printf "(%s * %s)" xstr ystr)
-  , Number (x - y) (printf "(%s - %s)" xstr ystr)
-  , Number (y - x) (printf "(%s - %s)" ystr xstr)
-  , Number (x / y) (printf "(%s / %s)" xstr ystr)
-  , Number (y / x) (printf "(%s / %s)" ystr xstr)
+combine2 [(x, xstr), (y, ystr)] =
+  [ (x + y, printf "(%s + %s)" xstr ystr)
+  , (x * y, printf "(%s * %s)" xstr ystr)
+  , (x - y, printf "(%s - %s)" xstr ystr)
+  , (y - x, printf "(%s - %s)" ystr xstr)
+  , (x / y, printf "(%s / %s)" xstr ystr)
+  , (y / x, printf "(%s / %s)" ystr xstr)
   ]
 combine2 _ = []
