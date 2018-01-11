@@ -1,7 +1,7 @@
 import Control.Monad (replicateM, replicateM_)
 import Data.List (find)
 import System.Random (randomRIO)
-import Text.Printf
+import Text.Printf (printf)
 
 type Number = (Float, String)
 
@@ -9,6 +9,7 @@ main :: IO ()
 main =
   replicateM_ 100 $ do
     nums <- randomList 4
+    putStr $ show (map (round . fst) nums) ++ " -> "
     case find (\x -> fst x == 24) $ calc nums of
       Just n -> print $ snd n
       Nothing -> print "No Solution"
@@ -16,7 +17,6 @@ main =
 randomList :: Int -> IO [Number]
 randomList n = do
   nums <- replicateM n $ randomRIO (1, 13 :: Integer)
-  print nums
   return (map (\x -> (fromInteger x, show x)) nums)
 
 calc :: [Number] -> [Number]

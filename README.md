@@ -1,2 +1,2 @@
 # calc24
-Use language core library as much as possible.
+Use basic language features to implement the [24 Game](https://en.wikipedia.org/wiki/24_Game)
