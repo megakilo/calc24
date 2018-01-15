@@ -11,19 +11,23 @@ fun <T> split(nums: List<T>, n: Int): Sequence<Pair<List<T>, List<T>>> {
             split(tail, n-1).map { pair -> Pair(pair.first + head, pair.second) }
 }
 
-fun combine2(nums: List<Number>): Sequence<Number> = sequenceOf(
-        Number(nums[0].first + nums[1].first, "(${nums[0].second} + ${nums[1].second})"),
-        Number(nums[0].first * nums[1].first, "(${nums[0].second} * ${nums[1].second})")) +
-        (if (nums[0].first > nums[1].first)
-            sequenceOf(Number(nums[0].first - nums[1].first, "(${nums[0].second} - ${nums[1].second})"))
-        else
-            sequenceOf(Number(nums[1].first - nums[0].first, "(${nums[1].second} - ${nums[0].second})"))) +
-        (if (nums[1].first != 0f)
-            sequenceOf(Number(nums[0].first / nums[1].first, "(${nums[0].second} / ${nums[1].second})"))
-        else emptySequence()) +
-        (if (nums[0].first != 0f)
-            sequenceOf(Number(nums[1].first / nums[0].first, "(${nums[1].second} / ${nums[0].second})"))
-        else emptySequence())
+fun combine2(nums: List<Number>): Sequence<Number> {
+    var sequence = emptySequence<Number>()
+    sequence += Number(nums[0].first + nums[1].first, "(${nums[0].second} + ${nums[1].second})")
+    sequence += Number(nums[0].first * nums[1].first, "(${nums[0].second} * ${nums[1].second})")
+    sequence += if (nums[0].first > nums[1].first) {
+        Number(nums[0].first - nums[1].first, "(${nums[0].second} - ${nums[1].second})")
+    } else {
+        Number(nums[1].first - nums[0].first, "(${nums[1].second} - ${nums[0].second})")
+    }
+    if (nums[1].first != 0f) {
+        sequence += Number(nums[0].first / nums[1].first, "(${nums[0].second} / ${nums[1].second})")
+    }
+    if (nums[0].first != 0f) {
+        sequence += Number(nums[1].first / nums[0].first, "(${nums[1].second} / ${nums[0].second})")
+    }
+    return sequence
+}
 
 fun reduce(nums: List<Number>): Sequence<List<Number>> = split(nums, 2).flatMap { pair ->
     combine2(pair.first).map { i -> pair.second + i }
