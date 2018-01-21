@@ -20,7 +20,7 @@ type pair struct {
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 OUTER:
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1000; i++ {
 		var vector []int
 		for j := 0; j < 4; j++ {
 			vector = append(vector, rand.Intn(13)+1)

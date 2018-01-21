@@ -22,7 +22,7 @@ public class Calc24 {
 
     public static void main(String[] args) {
         Random rand = new Random();
-        IntStream.range(0, 100).forEach(i -> {
+        IntStream.range(0, 1000).forEach(i -> {
             List<Integer> numbers = IntStream.range(0, 4).mapToObj(j -> rand.nextInt(13) + 1)
                                                          .collect(Collectors.toList());
             String result = calc(numbers.stream().map(x -> new Number((float) x, x.toString()))

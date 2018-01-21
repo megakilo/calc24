@@ -39,7 +39,7 @@ fun calc(nums: List<Number>): Sequence<Number> {
 }
 
 val rand = Random()
-(1..100).forEach {
+(1..1000).forEach {
     val numbers = (1..4).map{ rand.nextInt(13) + 1}
     val result = calc(numbers.map{Number(it.toFloat(), it.toString())}).find{it.first == 24f}?.second ?: "No Solution"
     println("$numbers -> $result")

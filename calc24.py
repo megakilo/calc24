@@ -46,7 +46,7 @@ def calc(nums):
     return result
 
 if __name__ == '__main__':
-    for c in range(100):
+    for c in range(1000):
         vector = [random.randint(1, 13) for x in range(4)]
         numbers = [(float(x), str(x)) for x in vector]
         solution = next((x[1] for x in calc(numbers) if x[0] == 24), "No Solution")

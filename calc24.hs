@@ -7,7 +7,7 @@ type Number = (Float, String)
 
 main :: IO ()
 main =
-  replicateM_ 100 $ do
+  replicateM_ 1000 $ do
     nums <- randomList 4
     putStr $ show (map (round . fst) nums) ++ " -> "
     case find (\x -> fst x == 24) $ calc nums of
