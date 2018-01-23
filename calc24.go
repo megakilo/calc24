@@ -19,7 +19,7 @@ type pair struct {
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
-OUTER:
+outer:
 	for i := 0; i < 1000; i++ {
 		var vector []int
 		for j := 0; j < 4; j++ {
@@ -32,7 +32,7 @@ OUTER:
 		for _, result := range calc(nums) {
 			if result.value == 24 {
 				fmt.Printf("%v -> %s\n", vector, result.expr)
-				continue OUTER
+				continue outer
 			}
 		}
 		fmt.Printf("%v -> No Solution\n", vector)
@@ -61,30 +61,27 @@ func reduce(nums []number) [][]number {
 }
 
 func split(nums []number, n int) []pair {
-	var result []pair
 	if n == 0 {
-		result = append(result, pair{[]number{}, nums})
-		return result
+		return []pair{{[]number{}, nums}}
 	}
 	if len(nums) <= n {
-		result = append(result, pair{nums, []number{}})
-		return result
+		return []pair{{nums, []number{}}}
 	}
-	head := nums[0]
-	tail := nums[1:]
-	for _, v := range split(tail, n) {
-		result = append(result, pair{v.taken, append(v.nontaken, head)})
+	var result []pair
+	for _, v := range split(nums[1:], n) {
+		result = append(result, pair{v.taken, append(v.nontaken, nums[0])})
 	}
-	for _, v := range split(tail, n-1) {
-		result = append(result, pair{append(v.taken, head), v.nontaken})
+	for _, v := range split(nums[1:], n-1) {
+		result = append(result, pair{append(v.taken, nums[0]), v.nontaken})
 	}
 	return result
 }
 
 func combine2(nums []number) []number {
-	var result []number
-	result = append(result, number{nums[0].value + nums[1].value, fmt.Sprintf("(%s + %s)", nums[0].expr, nums[1].expr)})
-	result = append(result, number{nums[0].value * nums[1].value, fmt.Sprintf("(%s * %s)", nums[0].expr, nums[1].expr)})
+	result := []number{
+		{nums[0].value + nums[1].value, fmt.Sprintf("(%s + %s)", nums[0].expr, nums[1].expr)},
+		{nums[0].value * nums[1].value, fmt.Sprintf("(%s * %s)", nums[0].expr, nums[1].expr)},
+	}
 	if nums[0].value > nums[1].value {
 		result = append(result, number{nums[0].value - nums[1].value,
 			fmt.Sprintf("(%s - %s)", nums[0].expr, nums[1].expr)})
