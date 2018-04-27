@@ -14,10 +14,13 @@ main =
       Just n -> print $ snd n
       Nothing -> print "No Solution"
 
+createNumber :: Integer -> Number
+createNumber x = (fromInteger x, show x)
+
 randomList :: Int -> IO [Number]
 randomList n = do
   nums <- replicateM n $ randomRIO (1, 13 :: Integer)
-  return (map (\x -> (fromInteger x, show x)) nums)
+  return $ map createNumber nums
 
 calc :: [Number] -> [Number]
 calc xs
@@ -34,10 +37,10 @@ split2 xs n
   | length xs <= n = [(xs, [])]
   | otherwise =
     map
-      (\(taken, nontaken) -> (taken, (head xs) : nontaken))
+      (\pair -> (fst pair, head xs : snd pair))
       (split2 (tail xs) n) ++
     map
-      (\(taken, nontaken) -> ((head xs) : taken, nontaken))
+      (\pair -> (head xs : fst pair, snd pair))
       (split2 (tail xs) (n - 1))
 
 combine2 :: [Number] -> [Number]
