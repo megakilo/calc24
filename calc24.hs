@@ -9,10 +9,10 @@ main :: IO ()
 main =
   replicateM_ 1000 $ do
     nums <- randomList 4
-    putStr $ show (map (round . fst) nums) ++ " -> "
+    let challenge = show $ map (round . fst) nums
     case find (\x -> fst x == 24) $ calc nums of
-      Just n -> putStrLn $ snd n
-      Nothing -> putStrLn "No Solution"
+      Just n -> putStrLn (challenge ++ " -> " ++ snd n)
+      Nothing -> putStrLn (challenge ++ " -> No Solution")
 
 randomList :: Int -> IO [Number]
 randomList n = do
@@ -24,11 +24,9 @@ randomList n = do
 calc :: [Number] -> [Number]
 calc xs
   | length xs == 1 = xs
-  | otherwise = reduce xs >>= calc
+  | otherwise = split xs 2 >>= reduce >>= calc
   where
-    reduce xs =
-      split xs 2 >>=
-      (\([num1, num2], nontaken) -> [r : nontaken | r <- combine num1 num2])
+    reduce ([num1, num2], nontaken) = [r : nontaken | r <- combine num1 num2]
 
 split :: [a] -> Int -> [([a], [a])]
 split xs 0 = [([], xs)]
