@@ -40,8 +40,9 @@ combine :: Number -> Number -> [Number]
 combine (x, xstr) (y, ystr) =
   [ (x + y, printf "(%s + %s)" xstr ystr)
   , (x * y, printf "(%s * %s)" xstr ystr)
-  , (x - y, printf "(%s - %s)" xstr ystr)
-  , (y - x, printf "(%s - %s)" ystr xstr)
   , (x / y, printf "(%s / %s)" xstr ystr)
   , (y / x, printf "(%s / %s)" ystr xstr)
+  , if x > y
+      then (x - y, printf "(%s - %s)" xstr ystr)
+      else (y - x, printf "(%s - %s)" ystr xstr)
   ]
