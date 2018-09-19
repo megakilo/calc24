@@ -7,95 +7,89 @@ import (
 	"time"
 )
 
-type number struct {
+// Number stores the value, the calcuation process and the last operator
+type Number struct {
 	value float32
 	expr  string
-}
-
-type pair struct {
-	taken    []number
-	nontaken []number
+	op    rune
 }
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
-outer:
 	for i := 0; i < 1000; i++ {
 		var vector []int
 		for j := 0; j < 4; j++ {
 			vector = append(vector, rand.Intn(13)+1)
 		}
-		var nums []number
+		var nums []Number
 		for _, v := range vector {
-			nums = append(nums, number{float32(v), strconv.Itoa(v)})
+			nums = append(nums, Number{float32(v), strconv.Itoa(v), 'x'})
 		}
-		for _, result := range calc(nums) {
-			if result.value == 24 {
-				fmt.Printf("%v -> %s\n", vector, result.expr)
-				continue outer
+		result, found := calc(nums, 24)
+		if found {
+			fmt.Printf("%v -> %s\n", vector, result)
+		} else {
+			fmt.Printf("%v -> No Solution\n", vector)
+		}
+	}
+}
+
+func calc(nums []Number, target float32) (string, bool) {
+	if len(nums) == 1 {
+		if nums[0].value == target {
+			return nums[0].expr, true
+		}
+		return "", false
+	}
+	for i := 0; i < len(nums); i++ {
+		for j := i + 1; j < len(nums); j++ {
+			reduced := make([]Number, len(nums))
+			copy(reduced, nums)
+			reduced[i] = reduced[len(reduced)-1]
+			reduced[j] = reduced[len(reduced)-2]
+			reduced = reduced[:len(reduced)-2]
+			for _, x := range combine(nums[i], nums[j]) {
+				reduced = append(reduced, x)
+				result, found := calc(reduced, target)
+				if found {
+					return result, found
+				}
+				reduced = reduced[:len(reduced)-1]
 			}
 		}
-		fmt.Printf("%v -> No Solution\n", vector)
 	}
+	return "", false
 }
 
-func calc(nums []number) []number {
-	if len(nums) == 1 {
-		return nums
+func combine(num1, num2 Number) []Number {
+	var result []Number
+	result = append(result, Number{num1.value + num2.value,
+		fmt.Sprintf("%s + %s", num1.expr, num2.expr), '+'})
+	result = append(result, Number{num1.value * num2.value,
+		fmt.Sprintf("%s * %s", addParentheses(num1, "+-"), addParentheses(num2, "+-")), '*'})
+	if num1.value > num2.value {
+		result = append(result, Number{num1.value - num2.value,
+			fmt.Sprintf("%s - %s", num1.expr, addParentheses(num2, "+-")), '-'})
+	} else {
+		result = append(result, Number{num2.value - num1.value,
+			fmt.Sprintf("%s - %s", num2.expr, addParentheses(num1, "+-")), '-'})
 	}
-	var result []number
-	for _, list := range reduce(nums) {
-		result = append(result, calc(list)...)
+	if num2.value != 0 {
+		result = append(result, Number{num1.value / num2.value,
+			fmt.Sprintf("%s / %s", addParentheses(num1, "+-"), addParentheses(num2, "+-*")), '/'})
+	}
+	if num1.value != 0 {
+		result = append(result, Number{num2.value / num1.value,
+			fmt.Sprintf("%s / %s", addParentheses(num2, "+-"), addParentheses(num1, "+-*")), '/'})
 	}
 	return result
 }
 
-func reduce(nums []number) [][]number {
-	var result [][]number
-	for _, v := range split(nums, 2) {
-		for _, x := range combine2(v.taken) {
-			result = append(result, append(v.nontaken, x))
+func addParentheses(x Number, conditions string) string {
+	for _, v := range conditions {
+		if v == x.op {
+			return "(" + x.expr + ")"
 		}
 	}
-	return result
-}
-
-func split(nums []number, n int) []pair {
-	if n == 0 {
-		return []pair{{[]number{}, nums}}
-	}
-	if len(nums) <= n {
-		return []pair{{nums, []number{}}}
-	}
-	var result []pair
-	for _, v := range split(nums[1:], n) {
-		result = append(result, pair{v.taken, append(v.nontaken, nums[0])})
-	}
-	for _, v := range split(nums[1:], n-1) {
-		result = append(result, pair{append(v.taken, nums[0]), v.nontaken})
-	}
-	return result
-}
-
-func combine2(nums []number) []number {
-	result := []number{
-		{nums[0].value + nums[1].value, fmt.Sprintf("(%s + %s)", nums[0].expr, nums[1].expr)},
-		{nums[0].value * nums[1].value, fmt.Sprintf("(%s * %s)", nums[0].expr, nums[1].expr)},
-	}
-	if nums[0].value > nums[1].value {
-		result = append(result, number{nums[0].value - nums[1].value,
-			fmt.Sprintf("(%s - %s)", nums[0].expr, nums[1].expr)})
-	} else {
-		result = append(result, number{nums[1].value - nums[0].value,
-			fmt.Sprintf("(%s - %s)", nums[1].expr, nums[0].expr)})
-	}
-	if nums[1].value != 0 {
-		result = append(result, number{nums[0].value / nums[1].value,
-			fmt.Sprintf("(%s / %s)", nums[0].expr, nums[1].expr)})
-	}
-	if nums[0].value != 0 {
-		result = append(result, number{nums[1].value / nums[0].value,
-			fmt.Sprintf("(%s / %s)", nums[1].expr, nums[0].expr)})
-	}
-	return result
+	return x.expr
 }
