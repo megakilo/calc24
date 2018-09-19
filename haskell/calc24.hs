@@ -1,5 +1,6 @@
 import Control.Monad (replicateM, replicateM_)
 import Data.List (find)
+import Data.Maybe (fromMaybe, isJust)
 import System.Random (randomRIO)
 import Text.Printf (printf)
 
@@ -12,31 +13,31 @@ data Number = Number
 main :: IO ()
 main =
   replicateM_ 1000 $ do
-    nums <- randomList 4
+    nums <- randomNumbers 4
     let challenge = show $ map (round . value) nums
-    case find (\num -> value num == 24) $ calc nums of
-      Just num -> putStrLn (challenge ++ " -> " ++ expression num)
+    case calc nums 24 of
+      Just result -> putStrLn (challenge ++ " -> " ++ result)
       Nothing -> putStrLn (challenge ++ " -> No Solution")
 
-randomList :: Int -> IO [Number]
-randomList n = do
+randomNumbers :: Int -> IO [Number]
+randomNumbers n = do
   nums <- replicateM n $ randomRIO (1, 13 :: Integer)
   return $ map (\x -> Number (fromInteger x) (show x) 'X') nums
 
-calc :: [Number] -> [Number]
-calc xs
-  | length xs == 1 = xs
-  | otherwise = split xs 2 >>= reduce >>= calc
-  where
-    reduce ([num1, num2], nontaken) = [r : nontaken | r <- combine num1 num2]
+calc :: [Number] -> Float -> Maybe String
+calc [] _ = Nothing
+calc [x] target = if value x == target then Just (expression x) else Nothing
+calc nums target = fromMaybe Nothing (find isJust [calc xs target | xs <- reducedList])
+  where reducedList = split nums 2 >>= \([num1, num2], nontaken) -> [r : nontaken | r <- combine num1 num2]
 
 split :: [a] -> Int -> [([a], [a])]
+split [] _ = []
 split xs 0 = [([], xs)]
-split xs n
+split xs@(h:t) n
   | length xs <= n = [(xs, [])]
   | otherwise =
-    map (\pair -> (fst pair, head xs : snd pair)) (split (tail xs) n) ++
-    map (\pair -> (head xs : fst pair, snd pair)) (split (tail xs) (n - 1))
+    map (\pair -> (fst pair, h : snd pair)) (split t n) ++
+    map (\pair -> (h : fst pair, snd pair)) (split t (n - 1))
 
 combine :: Number -> Number -> [Number]
 combine (Number x xExpr xOp) (Number y yExpr yOp) =
