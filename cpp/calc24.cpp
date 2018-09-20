@@ -1,98 +1,98 @@
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 #include <random>
-#include <vector>
 #include <string>
+#include <vector>
 
 using namespace std;
-using number = pair<float, string>;
-using parted = pair<vector<number>, vector<number>>;
 
-vector<number> combine2(const vector<number>& nums) {
-    vector<number> result;
-    result.push_back(make_pair(nums[0].first + nums[1].first, "(" + nums[0].second + " + " + nums[1].second + ")"));
-    result.push_back(make_pair(nums[0].first * nums[1].first, "(" + nums[0].second + " * " + nums[1].second + ")"));
-    if (nums[0].first > nums[1].first) {
-        result.push_back(make_pair(nums[0].first - nums[1].first, "(" + nums[0].second + " - " + nums[1].second + ")"));
+struct Number {
+  float value;
+  string expr;
+  char op;
+  Number() {}
+  Number(float v, string e, char o) : value(v), expr(e), op(o) {}
+};
+
+string add_pr(const Number& num, string conditions) {
+  if (conditions.find(num.op) != string::npos) {
+    return "(" + num.expr + ")";
+  } else {
+    return num.expr;
+  }
+}
+
+vector<Number> combine(const Number& num1, const Number& num2) {
+  vector<Number> result;
+  result.emplace_back(num1.value + num2.value, num1.expr + " + " + num2.expr,
+                      '+');
+  result.emplace_back(num1.value * num2.value,
+                      add_pr(num1, "+-") + " * " + add_pr(num2, "+-"), '*');
+  if (num1.value > num2.value) {
+    result.emplace_back(num1.value - num2.value,
+                        num1.expr + " - " + add_pr(num2, "+-"), '-');
+  } else {
+    result.emplace_back(num2.value - num1.value,
+                        num2.expr + " - " + add_pr(num1, "+-"), '-');
+  }
+  if (num2.value != 0) {
+    result.emplace_back(num1.value / num2.value,
+                        add_pr(num1, "+-") + " / " + add_pr(num2, "+-*"), '/');
+  }
+  if (num1.value != 0) {
+    result.emplace_back(num2.value / num1.value,
+                        add_pr(num2, "+-") + " / " + add_pr(num1, "+-*"), '/');
+  }
+  return result;
+}
+
+string calc(const vector<Number>& nums, const float target) {
+  if (nums.size() == 1) {
+    if (nums[0].value == target) {
+      return nums[0].expr;
     } else {
-        result.push_back(make_pair(nums[1].first - nums[0].first, "(" + nums[1].second + " - " + nums[0].second + ")"));
+      return "";
     }
-    if (nums[1].first != 0) {
-        result.push_back(make_pair(nums[0].first / nums[1].first, "(" + nums[0].second + " / " + nums[1].second + ")"));
-    }
-    if (nums[0].first != 0) {
-        result.push_back(make_pair(nums[1].first / nums[0].first, "(" + nums[1].second + " / " + nums[0].second + ")"));
-    }
-    return result;
-}
+  }
 
-vector<parted> split(const vector<number>& nums, int n) {
-    vector<parted> result;
-    if (n == 0) {
-        result.push_back(make_pair(vector<number>(), nums));
-        return result;
-    }
-    if (nums.size() <= n) {
-        result.push_back(make_pair(nums, vector<number>()));
-        return result;
-    }
-    for (parted p : split(vector<number>(nums.cbegin()+1, nums.cend()) , n)) {
-        p.second.push_back(nums[0]);
-        result.push_back(p);
-    }
-    for (parted p : split(vector<number>(nums.cbegin()+1, nums.cend()) , n - 1)) {
-        p.first.push_back(nums[0]);
-        result.push_back(p);
-    }
-    return result;
-}
-
-vector<vector<number>> reduce(const vector<number>& nums) {
-    vector<vector<number>> result;
-    for (parted& p : split(nums, 2)) {
-        for (number x : combine2(p.first)) {
-            vector<number> v(p.second);
-            v.push_back(x);
-            result.push_back(v);
+  for (int i = 0; i < nums.size(); i++) {
+    for (int j = i + 1; j < nums.size(); j++) {
+      vector<Number> reduced;
+      for (int k = 0; k < nums.size(); k++) {
+        if (k == i || k == j) continue;
+        reduced.push_back(nums[k]);
+      }
+      for (const Number& num : combine(nums[i], nums[j])) {
+        reduced.push_back(num);
+        string result = calc(reduced, target);
+        if (result != "") {
+          return result;
         }
+        reduced.pop_back();
+      }
     }
-    return result;
-}
-
-vector<number> calc(const vector<number>& nums) {
-    if (nums.size() == 1) {
-        return nums;
-    }
-    vector<number> result;
-    for (vector<number> x : reduce(nums)) {
-        vector<number> v = calc(x);
-        result.insert(result.end(), v.begin(), v.end());
-    }
-    return result;
+  }
+  return "";
 }
 
 int main() {
-    const int COUNT = 4;
-    srand(time(NULL));
-    for (int i = 0; i < 1000; i++) {
-        vector<number> nums(COUNT);
-        for (int j = 0; j < COUNT; j++) {
-            int t = rand() % 13 + 1;
-            nums[j] = make_pair(float(t), to_string(t));
-        }
-        string s = accumulate(nums.begin(), nums.end(), string(), [](string &ss, number &p) {
-            return ss.empty() ? p.second : ss + ", " + p.second;
-        });
-        cout << s << " -> ";
-        for (number& result : calc(nums)) {
-            if (result.first == 24) {
-                cout << result.second << endl;
-                goto next;
-            }
-        }
-        cout << "No Solution" << endl;
-next:
-        continue;
+  srand(time(NULL));
+  vector<Number> nums(4);
+  for (int i = 0; i < 1000; i++) {
+    for (int j = 0; j < 4; j++) {
+      int t = rand() % 13 + 1;
+      nums[j] = Number{float(t), to_string(t), 'x'};
     }
-    return 0;
+    string challenge = accumulate(
+        nums.begin(), nums.end(), string(), [](string& ss, Number& p) {
+          return ss.empty() ? p.expr : ss + ", " + p.expr;
+        });
+    string result = calc(nums, 24);
+    if (result != "") {
+      cout << challenge << " -> " << result << endl;
+    } else {
+      cout << challenge << " -> No Solution" << endl;
+    }
+  }
+  return 0;
 }
