@@ -36,10 +36,10 @@ def calc(nums, target):
         return None
     for i in range(len(nums)):
         for j in range(i+1, len(nums)):
-            reduced = nums[:]
-            reduced[i] = reduced[len(reduced)-1]
-            reduced[j] = reduced[len(reduced)-2]
-            reduced = reduced[:len(reduced)-2]
+            reduced = []
+            for k in range(len(nums)):
+                if k != i and k != j:
+                    reduced.append(nums[k])
             for x in combine(nums[i], nums[j]):
                 reduced.append(x)
                 result = calc(reduced, target)
