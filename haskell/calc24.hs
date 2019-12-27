@@ -11,18 +11,15 @@ data Number = Number
   }
 
 main :: IO ()
-main =
-  replicateM_ 1000 $ do
-    nums <- randomNumbers 4
-    let challenge = show $ map (round . value) nums
-    case calc nums 24 of
-      Just result -> putStrLn (challenge ++ " -> " ++ result)
-      Nothing -> putStrLn (challenge ++ " -> No Solution")
+main = replicateM_ 1000 $ do
+  nums <- replicateM 4 $ randomRIO (1, 13 :: Integer)
+  putStrLn $ calc24 nums
 
-randomNumbers :: Int -> IO [Number]
-randomNumbers n = do
-  nums <- replicateM n $ randomRIO (1, 13 :: Integer)
-  return $ map (\x -> Number (fromInteger x) (show x) 'X') nums
+calc24 :: [Integer] -> String
+calc24 nums = case calc numbers 24 of
+  Just result -> show nums ++ " -> " ++ result
+  Nothing     -> show nums ++ " -> No Solution"
+  where numbers = map (\x -> Number (fromInteger x) (show x) 'X') nums
 
 calc :: [Number] -> Float -> Maybe String
 calc [] _ = Nothing
