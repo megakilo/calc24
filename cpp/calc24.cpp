@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <random>
 #include <string>
 #include <vector>
@@ -13,40 +14,61 @@ struct Number {
   char op;
   Number() {}
   Number(float v, string e, char o) : value(v), expr(e), op(o) {}
-};
+  Number(const Number& num1, const Number& num2, const char current_op) {
+    op = current_op;
+    switch (op) {
+    case '+':
+      value = num1.value + num2.value;
+      expr = num1.expr + " + " + num2.expr;
+      break;
+    case '-':
+      value = num1.value - num2.value;
+      expr = num1.expr + " - " + create_expr(num2, false);
+      break;
+    case '*':
+      value = num1.value * num2.value;
+      expr = create_expr(num1, false) + " * " + create_expr(num2, false);
+      break;
+    case '/':
+      value = num1.value / num2.value;
+      expr = create_expr(num1, false) + " * " + create_expr(num2, true);
+      break;
+    default:
+      exit(1);
+    }
+  }
 
-string add_pr(const Number &num, string conditions) {
-  if (conditions.find(num.op) != string::npos) {
-    return "(" + num.expr + ")";
-  } else {
+  inline string create_expr(const Number &num, const bool is_denominator) {
+    if (num.op == '+' || num.op == '-' || (is_denominator && num.op == '*'))
+      return "(" + num.expr + ")";
     return num.expr;
   }
-}
+};
 
 vector<Number> combine(const Number& num1, const Number& num2) {
   vector<Number> result;
-  result.push_back(Number(num1.value + num2.value, num1.expr + " + " + num2.expr, '+'));
-  result.push_back(Number(num1.value * num2.value, add_pr(num1, "+-") + " * " + add_pr(num2, "+-"), '*'));
+  result.emplace_back(num1, num2, '+');
+  result.emplace_back(num1, num2, '*');
   if (num1.value > num2.value) {
-    result.push_back(Number(num1.value - num2.value, num1.expr + " - " + add_pr(num2, "+-"), '-'));
+    result.emplace_back(num1, num2, '-');
   } else {
-    result.push_back(Number(num2.value - num1.value, num2.expr + " - " + add_pr(num1, "+-"), '-'));
+    result.emplace_back(num2, num1, '-');
   }
   if (num2.value != 0) {
-    result.push_back(Number(num1.value / num2.value, add_pr(num1, "+-") + " / " + add_pr(num2, "+-*"), '/'));
+    result.emplace_back(num1, num2, '/');
   }
   if (num1.value != 0) {
-    result.push_back(Number(num2.value / num1.value, add_pr(num2, "+-") + " / " + add_pr(num1, "+-*"), '/'));
+    result.emplace_back(num2, num1, '/');
   }
   return result;
 }
 
-string calc(const vector<Number>& nums, const float target) {
+optional<string> calc(const vector<Number>& nums, const float target) {
   if (nums.size() == 1) {
     if (nums[0].value == target) {
       return nums[0].expr;
     } else {
-      return "";
+      return {};
     }
   }
 
@@ -60,15 +82,15 @@ string calc(const vector<Number>& nums, const float target) {
       }
       for (const Number& num : combine(nums[i], nums[j])) {
         reduced.push_back(num);
-        string result = calc(reduced, target);
-        if (result != "") {
+        const auto result = calc(reduced, target);
+        if (result.has_value()) {
           return result;
         }
         reduced.pop_back();
       }
     }
   }
-  return "";
+  return {};
 }
 
 int main() {
@@ -83,9 +105,9 @@ int main() {
         nums.begin(), nums.end(), string(), [](string& ss, Number& p) {
           return ss.empty() ? p.expr : ss + ", " + p.expr;
         });
-    string result = calc(nums, 24);
-    if (result != "") {
-      cout << challenge << " -> " << result << endl;
+    const auto result = calc(nums, 24);
+    if (result.has_value()) {
+      cout << challenge << " -> " << result.value() << endl;
     } else {
       cout << challenge << " -> No Solution" << endl;
     }
