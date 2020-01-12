@@ -8,28 +8,30 @@
 
 using namespace std;
 
+enum class OpType { Unknown, Plus, Minus, Multiply, Divide };
+
 struct Number {
   float value;
   string expr;
-  char op;
+  OpType op;
   Number() {}
-  Number(float v, string e, char o) : value(v), expr(e), op(o) {}
-  Number(const Number& num1, const Number& num2, const char current_op) {
+  Number(const float v, const string& e, const OpType o) : value(v), expr(e), op(o) {}
+  Number(const Number& num1, const Number& num2, const OpType current_op) {
     op = current_op;
     switch (op) {
-    case '+':
+    case OpType::Plus:
       value = num1.value + num2.value;
       expr = num1.expr + " + " + num2.expr;
       break;
-    case '-':
+    case OpType::Minus:
       value = num1.value - num2.value;
       expr = num1.expr + " - " + create_expr(num2, false);
       break;
-    case '*':
+    case OpType::Multiply:
       value = num1.value * num2.value;
       expr = create_expr(num1, false) + " * " + create_expr(num2, false);
       break;
-    case '/':
+    case OpType::Divide:
       value = num1.value / num2.value;
       expr = create_expr(num1, false) + " * " + create_expr(num2, true);
       break;
@@ -39,7 +41,8 @@ struct Number {
   }
 
   inline string create_expr(const Number &num, const bool is_denominator) {
-    if (num.op == '+' || num.op == '-' || (is_denominator && num.op == '*'))
+    if (num.op == OpType::Plus || num.op == OpType::Minus ||
+        (is_denominator && num.op == OpType::Multiply))
       return "(" + num.expr + ")";
     return num.expr;
   }
@@ -47,18 +50,18 @@ struct Number {
 
 vector<Number> combine(const Number& num1, const Number& num2) {
   vector<Number> result;
-  result.emplace_back(num1, num2, '+');
-  result.emplace_back(num1, num2, '*');
+  result.emplace_back(num1, num2, OpType::Plus);
+  result.emplace_back(num1, num2, OpType::Multiply);
   if (num1.value > num2.value) {
-    result.emplace_back(num1, num2, '-');
+    result.emplace_back(num1, num2, OpType::Minus);
   } else {
-    result.emplace_back(num2, num1, '-');
+    result.emplace_back(num2, num1, OpType::Minus);
   }
   if (num2.value != 0) {
-    result.emplace_back(num1, num2, '/');
+    result.emplace_back(num1, num2, OpType::Divide);
   }
   if (num1.value != 0) {
-    result.emplace_back(num2, num1, '/');
+    result.emplace_back(num2, num1, OpType::Divide);
   }
   return result;
 }
@@ -99,7 +102,7 @@ int main() {
   for (int i = 0; i < 1000; i++) {
     for (int j = 0; j < 4; j++) {
       int t = rand() % 13 + 1;
-      nums[j] = Number(float(t), to_string(t), 'x');
+      nums[j] = Number(float(t), to_string(t), OpType::Unknown);
     }
     string challenge = accumulate(
         nums.begin(), nums.end(), string(), [](string& ss, Number& p) {
