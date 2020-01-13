@@ -40,7 +40,7 @@ struct Number {
 
   inline string create_expr(const Number &num, const bool is_denominator) {
     if (num.op == OpType::Plus || num.op == OpType::Minus ||
-        (is_denominator && num.op == OpType::Multiply))
+        (is_denominator && num.op != OpType::Unknown))
       return "(" + num.expr + ")";
     return num.expr;
   }

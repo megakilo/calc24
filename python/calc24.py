@@ -25,7 +25,7 @@ class Node:
 
     @staticmethod
     def AddParentheses(node, is_denominator):
-        if node.op in ('+', '-') or (is_denominator and node.op == '*'):
+        if node.op in ('+', '-') or (is_denominator and node.op != 'x'):
             return f"({node})"
         else:
             return node
@@ -56,18 +56,18 @@ def combine(num1, num2):
         yield Node(num2, num1, '/')
 
 
-def calc(nums, target):
-    if len(nums) == 1:
-        if nums[0].value == target:
-            return nums[0]
+def calc(nodes, target):
+    if len(nodes) == 1:
+        if nodes[0].value == target:
+            return nodes[0]
         return None
-    for i in range(len(nums)):
-        for j in range(i+1, len(nums)):
+    for i in range(len(nodes)):
+        for j in range(i+1, len(nodes)):
             reduced = []
-            for k in range(len(nums)):
+            for k in range(len(nodes)):
                 if k != i and k != j:
-                    reduced.append(nums[k])
-            for x in combine(nums[i], nums[j]):
+                    reduced.append(nodes[k])
+            for x in combine(nodes[i], nodes[j]):
                 reduced.append(x)
                 result = calc(reduced, target)
                 if result:
@@ -75,13 +75,15 @@ def calc(nums, target):
                 reduced.pop()
     return None
 
+def calc24(numbers):
+    nodes = [Node.Create(x) for x in numbers]
+    return calc(nodes, 24)
 
 if __name__ == '__main__':
     for c in range(1000):
-        vector = [random.randint(1, 13) for x in range(4)]
-        numbers = [Node.Create(x) for x in vector]
-        result = calc(numbers, 24)
+        numbers = [random.randint(1, 13) for x in range(4)]
+        result = calc24(numbers)
         if result:
-            print(f"{vector} -> {result}")
+            print(f"{numbers} -> {result}")
         else:
-            print(f"{vector} -> No Solution")
+            print(f"{numbers} -> No Solution")
