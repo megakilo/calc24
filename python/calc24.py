@@ -1,44 +1,65 @@
 #! /usr/bin/env python3
 
 import random
-import sys
-import collections
-
-Number = collections.namedtuple("Number", "value expr op")
 
 
-def create_expr(num, is_denominator):
-    if num.op in ('+', '-') or (is_denominator and num.op == '*'):
-        return f"({num.expr})"
-    else:
-        return num.expr
+class Node:
+    def __init__(self, num1, num2, op):
+        self.left = num1
+        self.right = num2
+        self.op = op
+        if op == '+':
+            self.value = num1.value + num2.value
+        elif op == '-':
+            self.value = num1.value - num2.value
+        elif op == '*':
+            self.value = num1.value * num2.value
+        elif op == '/':
+            self.value = num1.value / num2.value
+
+    @staticmethod
+    def Create(value):
+        x = Node(None, None, 'x')
+        x.value = value
+        return x
+
+    @staticmethod
+    def AddParentheses(node, is_denominator):
+        if node.op in ('+', '-') or (is_denominator and node.op == '*'):
+            return f"({node})"
+        else:
+            return node
+
+    def __str__(self):
+        if self.op == 'x':
+            return str(self.value)
+        if self.op == '+':
+            return f"{self.left} + {self.right}"
+        elif self.op == '-':
+            return f"{self.left} - {Node.AddParentheses(self.right, False)}"
+        elif self.op == '*':
+            return f"{Node.AddParentheses(self.left, False)} * {Node.AddParentheses(self.right, False)}"
+        elif self.op == '/':
+            return f"{Node.AddParentheses(self.left, False)} / {Node.AddParentheses(self.right, True)}"
 
 
 def combine(num1, num2):
-    result = []
-    result.append(Number(num1.value + num2.value,
-                         f"{num1.expr} + {num2.expr}", '+'))
-    result.append(Number(num1.value * num2.value,
-                         f"{create_expr(num1, False)} * {create_expr(num2, False)}", '*'))
+    yield Node(num1, num2, '+')
+    yield Node(num1, num2, '*')
     if num1.value > num2.value:
-        result.append(Number(num1.value - num2.value,
-                             f"{num1.expr} - {create_expr(num2, False)}", '-'))
+        yield Node(num1, num2, '-')
     else:
-        result.append(Number(num2.value - num1.value,
-                             f"{num2.expr} - {create_expr(num1, False)}", '-'))
-    if not num2.value == 0:
-        result.append(Number(num1.value / num2.value,
-                             f"{create_expr(num1, False)} / {create_expr(num2, True)}", '/'))
-    if not num1.value == 0:
-        result.append(Number(num2.value / num1.value,
-                             f"{create_expr(num2, False)} / {create_expr(num1, True)}", '/'))
-    return result
+        yield Node(num2, num1, '-')
+    if num2.value != 0:
+        yield Node(num1, num2, '/')
+    if num1.value != 0:
+        yield Node(num2, num1, '/')
 
 
 def calc(nums, target):
     if len(nums) == 1:
         if nums[0].value == target:
-            return nums[0].expr
+            return nums[0]
         return None
     for i in range(len(nums)):
         for j in range(i+1, len(nums)):
@@ -49,18 +70,18 @@ def calc(nums, target):
             for x in combine(nums[i], nums[j]):
                 reduced.append(x)
                 result = calc(reduced, target)
-                if result is not None:
+                if result:
                     return result
-                reduced = reduced[:len(reduced)-1]
+                reduced.pop()
     return None
 
 
 if __name__ == '__main__':
     for c in range(1000):
         vector = [random.randint(1, 13) for x in range(4)]
-        numbers = [Number(float(x), str(x), 'x') for x in vector]
+        numbers = [Node.Create(x) for x in vector]
         result = calc(numbers, 24)
-        if result is None:
-            print(f"{vector} -> No Solution")
-        else:
+        if result:
             print(f"{vector} -> {result}")
+        else:
+            print(f"{vector} -> No Solution")
