@@ -1,6 +1,4 @@
-#include <algorithm>
 #include <iostream>
-#include <memory>
 #include <optional>
 #include <random>
 #include <string>
@@ -96,24 +94,35 @@ optional<string> calc(const vector<Number>& nums, const float target) {
   return {};
 }
 
+string calc24(vector<int> nums) {
+  vector<Number> numbers;
+  string challenge;
+  for (int i = 0; i < nums.size(); i++) {
+    int x = nums[i];
+    numbers.emplace_back(float(x), to_string(x), OpType::Unknown);
+    if (i > 0)
+      challenge.append(", ");
+    challenge.append(numbers[i].expr);
+  }
+  challenge.append(" -> ");
+  const auto result = calc(numbers, 24);
+  if (result.has_value()) {
+    challenge.append(result.value());
+  } else {
+    challenge.append("No Solution");
+  }
+  return challenge;
+}
+
 int main() {
   srand(time(NULL));
-  vector<Number> nums(4);
+  vector<int> nums(4);
   for (int i = 0; i < 1000; i++) {
+    nums.clear();
     for (int j = 0; j < 4; j++) {
-      int t = rand() % 13 + 1;
-      nums[j] = Number(float(t), to_string(t), OpType::Unknown);
+      nums.push_back(rand() % 13 + 1);
     }
-    string challenge = accumulate(
-        nums.begin(), nums.end(), string(), [](string& ss, Number& p) {
-          return ss.empty() ? p.expr : ss + ", " + p.expr;
-        });
-    const auto result = calc(nums, 24);
-    if (result.has_value()) {
-      cout << challenge << " -> " << result.value() << endl;
-    } else {
-      cout << challenge << " -> No Solution" << endl;
-    }
+    cout << calc24(nums) << endl;
   }
   return 0;
 }
