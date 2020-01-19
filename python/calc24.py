@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+from fractions import Fraction
 import random
 
 
@@ -20,7 +21,7 @@ class Node:
     @staticmethod
     def Create(value):
         x = Node(None, None, 'x')
-        x.value = value
+        x.value = Fraction(value)
         return x
 
     @staticmethod
@@ -41,6 +42,9 @@ class Node:
             return f"{Node.AddParentheses(self.left, False)} * {Node.AddParentheses(self.right, False)}"
         elif self.op == '/':
             return f"{Node.AddParentheses(self.left, False)} / {Node.AddParentheses(self.right, True)}"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 def combine(num1, num2):
