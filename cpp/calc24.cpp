@@ -19,19 +19,19 @@ struct Number {
     switch (op) {
     case OpType::Plus:
       value = num1.value + num2.value;
-      expr = num1.expr + " + " + num2.expr;
+      expr.append(num1.expr).append(" + ").append(num2.expr);
       break;
     case OpType::Minus:
       value = num1.value - num2.value;
-      expr = num1.expr + " - " + create_expr(num2, false);
+      expr.append(num1.expr).append(" - ").append(create_expr(num2, false));
       break;
     case OpType::Multiply:
       value = num1.value * num2.value;
-      expr = create_expr(num1, false) + " * " + create_expr(num2, false);
+      expr.append(create_expr(num1, false)).append(" * ").append(create_expr(num2, false));
       break;
     case OpType::Divide:
       value = num1.value / num2.value;
-      expr = create_expr(num1, false) + " * " + create_expr(num2, true);
+      expr.append(create_expr(num1, false)).append(" / ").append(create_expr(num2, true));
       break;
     default:
       exit(1);
@@ -39,9 +39,10 @@ struct Number {
   }
 
   inline string create_expr(const Number &num, const bool is_denominator) {
+    std::string s;
     if (num.op == OpType::Plus || num.op == OpType::Minus ||
         (is_denominator && num.op != OpType::Unknown))
-      return "(" + num.expr + ")";
+      return s.append("(").append(num.expr).append(")");
     return num.expr;
   }
 };
