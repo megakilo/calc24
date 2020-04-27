@@ -7,11 +7,48 @@ import (
 	"time"
 )
 
+type OpType int
+
+const (
+	None OpType = iota
+	Plus
+	Minus
+	Multiply
+	Divide
+)
+
 // Number stores the value, the calcuation process and the last operator
 type Number struct {
 	value float32
 	expr  string
-	op    rune
+	op    OpType
+}
+
+func AddParentheses(x Number, is_denominator bool) string {
+	if x.op == Plus || x.op == Minus || (is_denominator && x.op != None) {
+			return fmt.Sprintf("(%s)", x.expr)
+	}
+	return x.expr
+}
+
+func CreateNumber(num1, num2 Number, op OpType) Number {
+	var value float32
+	var expr string
+	switch op {
+	case Plus:
+		value = num1.value + num2.value
+		expr = fmt.Sprintf("%s + %s", num1.expr, num2.expr)
+	case Minus:
+		value = num1.value - num2.value
+		expr = fmt.Sprintf("%s - %s", num1.expr, AddParentheses(num2, false))
+	case Multiply:
+		value = num1.value * num2.value
+		expr = fmt.Sprintf("%s * %s", AddParentheses(num1, false), AddParentheses(num2, false))
+	case Divide:
+		value = num1.value / num2.value
+		expr = fmt.Sprintf("%s / %s", AddParentheses(num1, false), AddParentheses(num2, true))
+	}
+	return Number {value, expr, op}
 }
 
 func main() {
@@ -23,7 +60,7 @@ func main() {
 		}
 		var nums []Number
 		for _, v := range vector {
-			nums = append(nums, Number{float32(v), strconv.Itoa(v), 'x'})
+			nums = append(nums, Number{float32(v), strconv.Itoa(v), None})
 		}
 		result, found := calc(nums, 24)
 		if found {
@@ -35,26 +72,26 @@ func main() {
 }
 
 func calc(nums []Number, target float32) (string, bool) {
-	if len(nums) == 1 {
+	N := len(nums)
+	if N == 1 {
 		if nums[0].value == target {
 			return nums[0].expr, true
 		}
 		return "", false
 	}
-	for i := 0; i < len(nums); i++ {
-		for j := i + 1; j < len(nums); j++ {
-			reduced := make([]Number, len(nums))
+	for i := 0; i < N; i++ {
+		for j := i + 1; j < N; j++ {
+			reduced := make([]Number, N)
 			copy(reduced, nums)
-			reduced[i] = reduced[len(reduced)-1]
-			reduced[j] = reduced[len(reduced)-2]
-			reduced = reduced[:len(reduced)-2]
+			reduced[i] = reduced[N-1]
+			reduced[j] = reduced[N-2]
+			reduced = reduced[:N-1]
 			for _, x := range combine(nums[i], nums[j]) {
-				reduced = append(reduced, x)
+				reduced[N-2] = x
 				result, found := calc(reduced, target)
 				if found {
 					return result, found
 				}
-				reduced = reduced[:len(reduced)-1]
 			}
 		}
 	}
@@ -63,33 +100,18 @@ func calc(nums []Number, target float32) (string, bool) {
 
 func combine(num1, num2 Number) []Number {
 	var result []Number
-	result = append(result, Number{num1.value + num2.value,
-		fmt.Sprintf("%s + %s", num1.expr, num2.expr), '+'})
-	result = append(result, Number{num1.value * num2.value,
-		fmt.Sprintf("%s * %s", addParentheses(num1, "+-"), addParentheses(num2, "+-")), '*'})
+	result = append(result, CreateNumber(num1, num2, Plus))
+	result = append(result, CreateNumber(num1, num2, Multiply))
 	if num1.value > num2.value {
-		result = append(result, Number{num1.value - num2.value,
-			fmt.Sprintf("%s - %s", num1.expr, addParentheses(num2, "+-")), '-'})
+		result = append(result, CreateNumber(num1, num2, Minus))
 	} else {
-		result = append(result, Number{num2.value - num1.value,
-			fmt.Sprintf("%s - %s", num2.expr, addParentheses(num1, "+-")), '-'})
+		result = append(result, CreateNumber(num2, num1, Minus))
 	}
 	if num2.value != 0 {
-		result = append(result, Number{num1.value / num2.value,
-			fmt.Sprintf("%s / %s", addParentheses(num1, "+-"), addParentheses(num2, "+-*")), '/'})
+		result = append(result, CreateNumber(num1, num2, Divide))
 	}
 	if num1.value != 0 {
-		result = append(result, Number{num2.value / num1.value,
-			fmt.Sprintf("%s / %s", addParentheses(num2, "+-"), addParentheses(num1, "+-*")), '/'})
+		result = append(result, CreateNumber(num2, num1, Divide))
 	}
 	return result
-}
-
-func addParentheses(x Number, conditions string) string {
-	for _, v := range conditions {
-		if v == x.op {
-			return "(" + x.expr + ")"
-		}
-	}
-	return x.expr
 }
