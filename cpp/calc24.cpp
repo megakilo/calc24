@@ -16,28 +16,28 @@ struct Number {
   Number(const Number &num1, const Number &num2, const OpType current_op) {
     op = current_op;
     switch (op) {
-    case OpType::Plus:
-      value = num1.value + num2.value;
-      expr.append(num1.expr).append(" + ").append(num2.expr);
-      break;
-    case OpType::Minus:
-      value = num1.value - num2.value;
-      expr.append(num1.expr).append(" - ").append(create_expr(num2, false));
-      break;
-    case OpType::Multiply:
-      value = num1.value * num2.value;
-      expr.append(create_expr(num1, false))
-          .append(" * ")
-          .append(create_expr(num2, false));
-      break;
-    case OpType::Divide:
-      value = num1.value / num2.value;
-      expr.append(create_expr(num1, false))
-          .append(" / ")
-          .append(create_expr(num2, true));
-      break;
-    default:
-      exit(1);
+      case OpType::Plus:
+        value = num1.value + num2.value;
+        expr.append(num1.expr).append(" + ").append(num2.expr);
+        break;
+      case OpType::Minus:
+        value = num1.value - num2.value;
+        expr.append(num1.expr).append(" - ").append(create_expr(num2, false));
+        break;
+      case OpType::Multiply:
+        value = num1.value * num2.value;
+        expr.append(create_expr(num1, false))
+            .append(" * ")
+            .append(create_expr(num2, false));
+        break;
+      case OpType::Divide:
+        value = num1.value / num2.value;
+        expr.append(create_expr(num1, false))
+            .append(" / ")
+            .append(create_expr(num2, true));
+        break;
+      default:
+        exit(1);
     }
   }
 
@@ -79,13 +79,12 @@ std::optional<std::string> calc(const std::vector<Number> &nums,
     }
   }
 
-  std::vector<Number> reduced(N - 1);
+  std::vector<Number> reduced;
   for (int i = 0; i < N; i++) {
     for (int j = i + 1; j < N; j++) {
       reduced.clear();
       for (int k = 0; k < N; k++) {
-        if (k == i || k == j)
-          continue;
+        if (k == i || k == j) continue;
         reduced.push_back(nums[k]);
       }
       for (const Number &num : combine(nums[i], nums[j])) {
@@ -107,8 +106,7 @@ std::string calc24(const std::vector<int> &nums) {
   for (int i = 0; i < nums.size(); i++) {
     int x = nums[i];
     numbers.emplace_back(float(x), std::to_string(x), OpType::Unknown);
-    if (i > 0)
-      challenge.append(", ");
+    if (i > 0) challenge.append(", ");
     challenge.append(numbers[i].expr);
   }
   challenge.append(" -> ");
@@ -123,7 +121,7 @@ std::string calc24(const std::vector<int> &nums) {
 
 int main() {
   srand(time(NULL));
-  std::vector<int> nums(4);
+  std::vector<int> nums;
   for (int i = 0; i < 1000; i++) {
     nums.clear();
     for (int j = 0; j < 4; j++) {
