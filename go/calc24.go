@@ -17,38 +17,52 @@ const (
 	Divide
 )
 
-// Number stores the value, the calcuation process and the last operator
 type Number struct {
 	value float32
-	expr  string
 	op    OpType
+	left  *Number
+	right *Number
 }
 
-func AddParentheses(x Number, is_denominator bool) string {
+func AddParentheses(x *Number, is_denominator bool) string {
 	if x.op == Plus || x.op == Minus || (is_denominator && x.op != None) {
-			return fmt.Sprintf("(%s)", x.expr)
+			return fmt.Sprintf("(%s)", Print(x))
 	}
-	return x.expr
+	return Print(x)
 }
 
-func CreateNumber(num1, num2 Number, op OpType) Number {
-	var value float32
-	var expr string
+func Print(x *Number) string {
+	switch x.op {
+	case None:
+		return strconv.Itoa(int(x.value))
+	case Plus:
+		return fmt.Sprintf("%s + %s", Print(x.left), Print(x.right))
+	case Minus:
+		return fmt.Sprintf("%s - %s", Print(x.left), AddParentheses(x.right, false))
+	case Multiply:
+		return fmt.Sprintf("%s * %s", AddParentheses(x.left, false), AddParentheses(x.right, false))
+	case Divide:
+		return fmt.Sprintf("%s / %s", AddParentheses(x.left, false), AddParentheses(x.right, true))
+	}
+	return "";
+}
+
+func CreateNumber(num1, num2 *Number, op OpType) *Number {
+	x := new(Number)
+	x.op = op
+	x.left = num1
+	x.right = num2
 	switch op {
 	case Plus:
-		value = num1.value + num2.value
-		expr = fmt.Sprintf("%s + %s", num1.expr, num2.expr)
+		x.value = num1.value + num2.value
 	case Minus:
-		value = num1.value - num2.value
-		expr = fmt.Sprintf("%s - %s", num1.expr, AddParentheses(num2, false))
+		x.value = num1.value - num2.value
 	case Multiply:
-		value = num1.value * num2.value
-		expr = fmt.Sprintf("%s * %s", AddParentheses(num1, false), AddParentheses(num2, false))
+		x.value = num1.value * num2.value
 	case Divide:
-		value = num1.value / num2.value
-		expr = fmt.Sprintf("%s / %s", AddParentheses(num1, false), AddParentheses(num2, true))
+		x.value = num1.value / num2.value
 	}
-	return Number {value, expr, op}
+	return x
 }
 
 func main() {
@@ -58,30 +72,30 @@ func main() {
 		for j := 0; j < 4; j++ {
 			vector = append(vector, rand.Intn(13)+1)
 		}
-		var nums []Number
+		var nums []*Number
 		for _, v := range vector {
-			nums = append(nums, Number{float32(v), strconv.Itoa(v), None})
+			nums = append(nums, &Number{float32(v), None, nil, nil})
 		}
 		result, found := calc(nums, 24)
 		if found {
-			fmt.Printf("%v -> %s\n", vector, result)
+			fmt.Printf("%v -> %s\n", vector, Print(result))
 		} else {
 			fmt.Printf("%v -> No Solution\n", vector)
 		}
 	}
 }
 
-func calc(nums []Number, target float32) (string, bool) {
+func calc(nums []*Number, target float32) (*Number, bool) {
 	N := len(nums)
 	if N == 1 {
 		if nums[0].value == target {
-			return nums[0].expr, true
+			return nums[0], true
 		}
-		return "", false
+		return nil, false
 	}
 	for i := 0; i < N; i++ {
 		for j := i + 1; j < N; j++ {
-			reduced := make([]Number, N)
+			reduced := make([]*Number, N)
 			copy(reduced, nums)
 			reduced[i] = reduced[N-1]
 			reduced[j] = reduced[N-2]
@@ -95,11 +109,11 @@ func calc(nums []Number, target float32) (string, bool) {
 			}
 		}
 	}
-	return "", false
+	return nil, false
 }
 
-func combine(num1, num2 Number) []Number {
-	var result []Number
+func combine(num1, num2 *Number) []*Number {
+	var result []*Number
 	result = append(result, CreateNumber(num1, num2, Plus))
 	result = append(result, CreateNumber(num1, num2, Multiply))
 	if num1.value > num2.value {
