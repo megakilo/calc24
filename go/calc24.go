@@ -68,20 +68,24 @@ func CreateNumber(num1, num2 *Number, op OpType) *Number {
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	for i := 0; i < 1000; i++ {
-		var vector []int
+		var nums []int
 		for j := 0; j < 4; j++ {
-			vector = append(vector, rand.Intn(13)+1)
+			nums = append(nums, rand.Intn(13)+1)
 		}
-		var nums []*Number
-		for _, v := range vector {
-			nums = append(nums, &Number{float32(v), None, nil, nil})
-		}
-		result, found := calc(nums, 24)
-		if found {
-			fmt.Printf("%v -> %s\n", vector, Print(result))
-		} else {
-			fmt.Printf("%v -> No Solution\n", vector)
-		}
+		fmt.Printf(calc24(nums))
+	}
+}
+
+func calc24(nums []int) string {
+	var numbers []*Number
+	for _, v := range nums {
+		numbers = append(numbers, &Number{float32(v), None, nil, nil})
+	}
+	result, found := calc(numbers, 24)
+	if found {
+		return fmt.Sprintf("%v -> %s\n", nums, Print(result))
+	} else {
+		return fmt.Sprintf("%v -> No Solution\n", nums)
 	}
 }
 

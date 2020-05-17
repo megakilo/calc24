@@ -4,7 +4,7 @@ from fractions import Fraction
 import random
 
 
-class Node:
+class Number:
     def __init__(self, num1, num2, op):
         self.left = num1
         self.right = num2
@@ -20,7 +20,7 @@ class Node:
 
     @staticmethod
     def Create(value):
-        x = Node(None, None, 'x')
+        x = Number(None, None, 'x')
         x.value = Fraction(value)
         return x
 
@@ -37,27 +37,27 @@ class Node:
         if self.op == '+':
             return f"{self.left} + {self.right}"
         elif self.op == '-':
-            return f"{self.left} - {Node.AddParentheses(self.right, False)}"
+            return f"{self.left} - {Number.AddParentheses(self.right, False)}"
         elif self.op == '*':
-            return f"{Node.AddParentheses(self.left, False)} * {Node.AddParentheses(self.right, False)}"
+            return f"{Number.AddParentheses(self.left, False)} * {Number.AddParentheses(self.right, False)}"
         elif self.op == '/':
-            return f"{Node.AddParentheses(self.left, False)} / {Node.AddParentheses(self.right, True)}"
+            return f"{Number.AddParentheses(self.left, False)} / {Number.AddParentheses(self.right, True)}"
 
     def __repr__(self):
         return self.__str__()
 
 
 def combine(num1, num2):
-    yield Node(num1, num2, '+')
-    yield Node(num1, num2, '*')
+    yield Number(num1, num2, '+')
+    yield Number(num1, num2, '*')
     if num1.value > num2.value:
-        yield Node(num1, num2, '-')
+        yield Number(num1, num2, '-')
     else:
-        yield Node(num2, num1, '-')
+        yield Number(num2, num1, '-')
     if num2.value != 0:
-        yield Node(num1, num2, '/')
+        yield Number(num1, num2, '/')
     if num1.value != 0:
-        yield Node(num2, num1, '/')
+        yield Number(num2, num1, '/')
 
 
 def calc(nodes, target):
@@ -80,14 +80,14 @@ def calc(nodes, target):
     return None
 
 def calc24(numbers):
-    nodes = [Node.Create(x) for x in numbers]
-    return calc(nodes, 24)
+    nodes = [Number.Create(x) for x in numbers]
+    result = calc(nodes, 24)
+    if result:
+        return f"{numbers} -> {result}"
+    else:
+        return f"{numbers} -> No Solution"
 
 if __name__ == '__main__':
     for c in range(1000):
         numbers = [random.randint(1, 13) for x in range(4)]
-        result = calc24(numbers)
-        if result:
-            print(f"{numbers} -> {result}")
-        else:
-            print(f"{numbers} -> No Solution")
+        print(calc24(numbers))
