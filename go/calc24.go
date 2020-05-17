@@ -26,7 +26,7 @@ type Number struct {
 
 func AddParentheses(x *Number, is_denominator bool) string {
 	if x.op == Plus || x.op == Minus || (is_denominator && x.op != None) {
-			return fmt.Sprintf("(%s)", Print(x))
+		return fmt.Sprintf("(%s)", Print(x))
 	}
 	return Print(x)
 }
@@ -44,7 +44,7 @@ func Print(x *Number) string {
 	case Divide:
 		return fmt.Sprintf("%s / %s", AddParentheses(x.left, false), AddParentheses(x.right, true))
 	}
-	return "";
+	return ""
 }
 
 func CreateNumber(num1, num2 *Number, op OpType) *Number {
@@ -95,11 +95,14 @@ func calc(nums []*Number, target float32) (*Number, bool) {
 	}
 	for i := 0; i < N; i++ {
 		for j := i + 1; j < N; j++ {
-			reduced := make([]*Number, N)
-			copy(reduced, nums)
-			reduced[i] = reduced[N-1]
-			reduced[j] = reduced[N-2]
-			reduced = reduced[:N-1]
+			var reduced []*Number
+			for k := 0; k < N; k++ {
+				if k == i || k == j {
+					continue
+				}
+				reduced = append(reduced, nums[k])
+			}
+			reduced = append(reduced, nil)
 			for _, x := range combine(nums[i], nums[j]) {
 				reduced[N-2] = x
 				result, found := calc(reduced, target)
