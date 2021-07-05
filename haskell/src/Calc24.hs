@@ -1,3 +1,5 @@
+module Calc24 (main) where
+
 import Control.Monad (replicateM, replicateM_)
 import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
