@@ -13,8 +13,7 @@ struct Number {
   Number* right;
   OpType op;
   explicit Number(const float v) : value(v), op(OpType::None) {}
-  Number(Number* num1, Number* num2,
-         const OpType current_op) {
+  Number(Number* num1, Number* num2, const OpType current_op) {
     op = current_op;
     left = num1;
     right = num2;
@@ -40,8 +39,7 @@ struct Number {
 
 std::string print(Number* num);
 
-std::string create_expr(Number* num,
-                        const bool is_denominator) {
+std::string create_expr(Number* num, const bool is_denominator) {
   std::string s;
   if (num->op == OpType::Plus || num->op == OpType::Minus ||
       (is_denominator && num->op != OpType::None))
@@ -95,7 +93,8 @@ std::vector<std::unique_ptr<Number>> combine(Number* num1, Number* num2) {
   return result;
 }
 
-std::optional<std::string> calc(const std::vector<Number*>& nums, const float target) {
+std::optional<std::string> calc(const std::vector<Number*>& nums,
+                                const float target) {
   const int N = nums.size();
   if (N == 1) {
     if (nums[0]->value == target) {
@@ -106,7 +105,7 @@ std::optional<std::string> calc(const std::vector<Number*>& nums, const float ta
   }
 
   std::vector<Number*> reduced;
-  reduced.reserve(N-1);
+  reduced.reserve(N - 1);
   for (int i = 0; i < N; i++) {
     for (int j = i + 1; j < N; j++) {
       reduced.clear();
@@ -116,7 +115,7 @@ std::optional<std::string> calc(const std::vector<Number*>& nums, const float ta
       }
       reduced.push_back(nullptr);
       for (const auto& num : combine(nums[i], nums[j])) {
-        reduced[N-2] = num.get();
+        reduced[N - 2] = num.get();
         const auto result = calc(reduced, target);
         if (result.has_value()) {
           return result;

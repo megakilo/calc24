@@ -37,7 +37,8 @@ struct Number {
   template <typename std::size_t N>
   std::string print(const std::array<double, N>& a, const bool is_denominator) {
     std::string s;
-    if (op == OpType::Add || op == OpType::Subtract || is_denominator) {
+    if (op == OpType::Add || op == OpType::Subtract ||
+        (op != OpType::None && is_denominator)) {
       return s.append("(").append(print(a)).append(")");
     } else {
       return s.append(print(a));
