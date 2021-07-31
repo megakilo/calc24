@@ -1,3 +1,4 @@
+use calc24;
 use rand::Rng;
 
 fn main() {
