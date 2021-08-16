@@ -53,8 +53,8 @@ impl Operand {
         }
     }
 
-    fn to_string_helper(node: &Rc<Operand>, nums: &[f64], is_denominator: bool) -> String {
-        match &**node {
+    fn to_string_helper(node: &Operand, nums: &[f64], is_denominator: bool) -> String {
+        match node {
             Operand::Number(index) => nums[*index].to_string(),
             Operand::Expression { op, .. } => match op {
                 OpType::Add | OpType::Substract => format!("({})", node.to_string(nums)),
