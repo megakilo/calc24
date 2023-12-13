@@ -52,11 +52,14 @@ combine = \op1, op2 -> [
 buildFormula : List Operand -> List Operand
 buildFormula = \indexes -> when indexes is
     [_] -> indexes
-    _ -> split indexes 2 
-        |> List.map (\{ taken: [i1, i2], nontaken } -> combine i1 i2 |> List.map (\r -> List.prepend nontaken r)) 
-        |> List.map (\x -> List.map x buildFormula) 
-        |> List.join
-        |> List.join
+    _ -> reduced = 
+            {taken, nontaken} <- split indexes 2 |> List.map
+            {i1, i2} = when taken is
+                [a, b] -> {i1: a, i2: b}
+                _ -> crash "unexpected input"
+            r <- combine i1 i2 |> List.map
+            nontaken |> List.prepend  r |> buildFormula
+         reduced |> List.join |> List.join
 
 split : List a, Nat -> List { taken : List a, nontaken : List a }
 split = \xs, n ->
