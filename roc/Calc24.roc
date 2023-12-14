@@ -71,18 +71,17 @@ buildFormula = \indexes ->
 
 split : List a, Nat -> List { taken : List a, nontaken : List a }
 split = \xs, n ->
-    if n == 0 then
-        [{ taken: [], nontaken: xs }]
-    else
-        when xs is
-            [] -> []
-            [head, .. as tail] ->
-                if List.len xs <= n then
-                    [{ taken: xs, nontaken: [] }]
-                else
-                    List.concat
-                        (split tail n |> List.map (\{ taken, nontaken } -> { taken, nontaken: List.append nontaken head }))
-                        (split tail (n - 1) |> List.map (\{ taken, nontaken } -> { taken: List.append taken head, nontaken }))
+    when xs is
+        [] -> []
+        [head, .. as tail] ->
+            if n == 0 then
+                [{ taken: [], nontaken: xs }]
+            else if List.len xs <= n then
+                [{ taken: xs, nontaken: [] }]
+            else
+                List.concat
+                    (split tail n |> List.map (\{ taken, nontaken } -> { taken, nontaken: List.append nontaken head }))
+                    (split tail (n - 1) |> List.map (\{ taken, nontaken } -> { taken: List.append taken head, nontaken }))
 
 calc24 = \nums, formula ->
     # Debug: expressions |> List.map (\e -> toStr e nums) |> Str.joinWith "\n"
