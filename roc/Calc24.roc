@@ -15,30 +15,35 @@ Operand : [
 ]
 
 eval : Operand, List I32 -> F64
-eval = \operand, nums -> when operand is
-    Index i -> List.get nums i |> Result.map Num.toF64 |> Result.withDefault 0
-    Expression { operator, left, right } -> when operator is
-        Add -> (eval left nums) + (eval right nums)
-        Subtract -> (eval left nums) - (eval right nums)
-        Multiply -> (eval left nums) * (eval right nums)
-        Divide -> (eval left nums) / (eval right nums)
+eval = \operand, nums ->
+    when operand is
+        Index i -> List.get nums i |> Result.map Num.toF64 |> Result.withDefault 0
+        Expression { operator, left, right } ->
+            when operator is
+                Add -> (eval left nums) + (eval right nums)
+                Subtract -> (eval left nums) - (eval right nums)
+                Multiply -> (eval left nums) * (eval right nums)
+                Divide -> (eval left nums) / (eval right nums)
 
 toStr : Operand, List I32 -> Str
-toStr = \operand, nums -> when operand is
-    Index i -> List.get nums i |> Result.withDefault 0 |> Num.toStr
-    Expression { operator, left, right } -> when operator is
-        Add -> "\(toStr left nums) + \(toStr right nums)"
-        Subtract -> "\(toStr left nums) - \(toWrappedStr right nums Bool.false)"
-        Multiply -> "\(toWrappedStr left nums Bool.false) * \(toWrappedStr right nums Bool.false)"
-        Divide -> "\(toWrappedStr left nums Bool.false) / \(toWrappedStr right nums Bool.true)"
+toStr = \operand, nums ->
+    when operand is
+        Index i -> List.get nums i |> Result.withDefault 0 |> Num.toStr
+        Expression { operator, left, right } ->
+            when operator is
+                Add -> "\(toStr left nums) + \(toStr right nums)"
+                Subtract -> "\(toStr left nums) - \(toWrappedStr right nums Bool.false)"
+                Multiply -> "\(toWrappedStr left nums Bool.false) * \(toWrappedStr right nums Bool.false)"
+                Divide -> "\(toWrappedStr left nums Bool.false) / \(toWrappedStr right nums Bool.true)"
 
-toWrappedStr = \operand, nums, isDenominator -> when operand is
-    Index i -> List.get nums i |> Result.withDefault 0 |> Num.toStr
-    Expression { operator } ->
-        result = toStr operand nums
-        when operator is
-            Add | Subtract -> "(\(result))"
-            _ -> if isDenominator then "(\(result))" else result
+toWrappedStr = \operand, nums, isDenominator ->
+    when operand is
+        Index i -> List.get nums i |> Result.withDefault 0 |> Num.toStr
+        Expression { operator } ->
+            result = toStr operand nums
+            when operator is
+                Add | Subtract -> "(\(result))"
+                _ -> if isDenominator then "(\(result))" else result
 
 combine = \op1, op2 -> [
     Expression { left: op1, right: op2, operator: Add },
@@ -50,30 +55,34 @@ combine = \op1, op2 -> [
 ]
 
 buildFormula : List Operand -> List Operand
-buildFormula = \indexes -> when indexes is
-    [_] -> indexes
-    _ -> reduced = 
-            {taken, nontaken} <- split indexes 2 |> List.map
-            {i1, i2} = when taken is
-                [a, b] -> {i1: a, i2: b}
-                _ -> crash "unexpected input"
-            r <- combine i1 i2 |> List.map
-            nontaken |> List.prepend  r |> buildFormula
-         reduced |> List.join |> List.join
+buildFormula = \indexes ->
+    when indexes is
+        [_] -> indexes
+        _ ->
+            reduced =
+                { taken, nontaken } <- split indexes 2 |> List.map
+                { i1, i2 } =
+                    when taken is
+                        [a, b] -> { i1: a, i2: b }
+                        _ -> crash "unexpected input"
+                r <- combine i1 i2 |> List.map
+                nontaken |> List.append r |> buildFormula
+            reduced |> List.join |> List.join
 
 split : List a, Nat -> List { taken : List a, nontaken : List a }
 split = \xs, n ->
     if n == 0 then
         [{ taken: [], nontaken: xs }]
-    else when xs is
-        [] -> []
-        [head, .. as tail] ->
-            if List.len xs <= n then
-                [{ taken: xs, nontaken: [] }]
-            else
-                List.concat
-                    (split tail n |> List.map (\{ taken, nontaken } -> { taken, nontaken: List.prepend nontaken head }))
-                    (split tail (n - 1) |> List.map (\{ taken, nontaken } -> { taken: List.prepend taken head, nontaken }))
+    else
+        when xs is
+            [] -> []
+            [head, .. as tail] ->
+                if List.len xs <= n then
+                    [{ taken: xs, nontaken: [] }]
+                else
+                    List.concat
+                        (split tail n |> List.map (\{ taken, nontaken } -> { taken, nontaken: List.append nontaken head }))
+                        (split tail (n - 1) |> List.map (\{ taken, nontaken } -> { taken: List.append taken head, nontaken }))
 
 calc24 = \nums, formula ->
     # Debug: expressions |> List.map (\e -> toStr e nums) |> Str.joinWith "\n"
