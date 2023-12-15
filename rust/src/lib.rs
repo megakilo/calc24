@@ -37,32 +37,32 @@ impl Operand {
                 OpType::Substract => format!(
                     "{} - {}",
                     left.to_string(nums),
-                    Operand::to_string_helper(right, nums, false)
+                    right.to_string_helper(nums, false)
                 ),
                 OpType::Multiply => format!(
                     "{} * {}",
-                    Operand::to_string_helper(left, nums, false),
-                    Operand::to_string_helper(right, nums, false),
+                    left.to_string_helper(nums, false),
+                    right.to_string_helper(nums, false)
                 ),
                 OpType::Divide => format!(
                     "{} / {}",
-                    Operand::to_string_helper(left, nums, false),
-                    Operand::to_string_helper(right, nums, true),
+                    left.to_string_helper(nums, false),
+                    right.to_string_helper(nums, true)
                 ),
             },
         }
     }
 
-    fn to_string_helper(node: &Operand, nums: &[f64], is_denominator: bool) -> String {
-        match node {
+    fn to_string_helper(&self, nums: &[f64], is_denominator: bool) -> String {
+        match self {
             Operand::Number(index) => nums[*index].to_string(),
             Operand::Expression { op, .. } => match op {
-                OpType::Add | OpType::Substract => format!("({})", node.to_string(nums)),
+                OpType::Add | OpType::Substract => format!("({})", self.to_string(nums)),
                 _ => {
                     if is_denominator {
-                        format!("({})", node.to_string(nums))
+                        format!("({})", self.to_string(nums))
                     } else {
-                        node.to_string(nums)
+                        self.to_string(nums)
                     }
                 }
             },
