@@ -1,5 +1,6 @@
 use calc24;
 use rand::Rng;
+use itertools::join;
 
 fn main() {
     let mut rng = rand::thread_rng();
@@ -7,23 +8,14 @@ fn main() {
 
     let calculator = calc24::Calc24::new(N);
 
-    let mut nums = [0 as f64; N];
+    let mut nums = [0; N];
     for _ in 0..1000 {
-        let mut challenge = String::new();
         for j in 0..N {
             let x = rng.gen_range(1..=13);
-            nums[j] = x as f64;
-            if j > 0 {
-                challenge.push_str(", ")
-            }
-            challenge.push_str(&x.to_string())
+            nums[j] = x;
         }
-        challenge.push_str(" -> ");
-        if let Some(solution) = calculator.calc(&nums) {
-            challenge.push_str(&solution);
-        } else {
-            challenge.push_str("No Solution");
-        }
-        println!("{}", &challenge);
+        let result = calculator.calc(&nums).unwrap_or("No Solution".to_string());
+        let joined = join(&nums, ", ");
+        println!("{} -> {}", &joined, result);
     }
 }

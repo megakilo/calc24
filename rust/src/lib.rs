@@ -17,9 +17,9 @@ pub enum Operand {
 }
 
 impl Operand {
-    fn eval(&self, nums: &[f64]) -> f64 {
+    fn eval(&self, nums: &[i32]) -> f64 {
         match self {
-            Operand::Number(index) => nums[*index],
+            Operand::Number(index) => nums[*index] as f64,
             Operand::Expression { op, left, right } => match op {
                 OpType::Add => left.eval(nums) + right.eval(nums),
                 OpType::Substract => left.eval(nums) - right.eval(nums),
@@ -29,7 +29,7 @@ impl Operand {
         }
     }
 
-    fn to_string(&self, nums: &[f64]) -> String {
+    fn to_string(&self, nums: &[i32]) -> String {
         match self {
             Operand::Number(index) => nums[*index].to_string(),
             Operand::Expression { op, left, right } => match op {
@@ -53,7 +53,7 @@ impl Operand {
         }
     }
 
-    fn to_string_helper(&self, nums: &[f64], is_denominator: bool) -> String {
+    fn to_string_helper(&self, nums: &[i32], is_denominator: bool) -> String {
         match self {
             Operand::Number(index) => nums[*index].to_string(),
             Operand::Expression { op, .. } => match op {
@@ -143,7 +143,7 @@ impl Calc24 {
         Calc24 { expressions }
     }
 
-    pub fn calc(&self, nums: &[f64]) -> Option<String> {
+    pub fn calc(&self, nums: &[i32]) -> Option<String> {
         for e in &self.expressions {
             if e.eval(nums) == 24_f64 {
                 return Some(e.to_string(nums));
@@ -160,28 +160,28 @@ mod tests {
     #[test]
     fn test_basic_3_numbers() {
         let calculator = Calc24::new(3);
-        let result = calculator.calc(&[2f64, 3f64, 4f64]);
+        let result = calculator.calc(&[2, 3, 4]);
         assert_eq!(result.is_some(), true);
     }
 
     #[test]
     fn test_invalid_3_numbers() {
         let calculator = Calc24::new(3);
-        let result = calculator.calc(&[1f64, 3f64, 4f64]);
+        let result = calculator.calc(&[1, 3, 4]);
         assert_eq!(result.is_none(), true);
     }
 
     #[test]
     fn test_basic_4_numbers() {
         let calculator = Calc24::new(4);
-        let result = calculator.calc(&[1f64, 2f64, 3f64, 4f64]);
+        let result = calculator.calc(&[1, 2, 3, 4]);
         assert_eq!(result.is_some(), true);
     }
 
     #[test]
     fn test_fraction_4_numbers() {
         let calculator = Calc24::new(4);
-        let result = calculator.calc(&[3f64, 3f64, 7f64, 7f64]);
+        let result = calculator.calc(&[3, 3, 7, 7]);
         assert_eq!(result.is_some(), true);
     }
 }
