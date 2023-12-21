@@ -1,4 +1,4 @@
-cabal-version: 1.12
+cabal-version: 3.8
 
 name:           calc24
 version:        0.1.0.0
@@ -24,7 +24,6 @@ library
       src
   build-depends:
       base >=4.7 && <5
-    , random
   default-language: Haskell2010
 
 executable calc24-exe
@@ -37,6 +36,7 @@ executable calc24-exe
   build-depends:
       base >=4.7 && <5
     , calc24
+    , random
   default-language: Haskell2010
 
 test-suite calc24-test

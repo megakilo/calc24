@@ -1,9 +1,7 @@
-module Calc24 (main, calc24) where
+module Calc24 (calc24) where
 
-import Control.Monad (replicateM, replicateM_)
 import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
-import System.Random (randomRIO)
 import Text.Printf (printf)
 
 data Number = Number
@@ -11,13 +9,6 @@ data Number = Number
     expression :: String,
     operator :: Char
   }
-
-main :: IO ()
-main = replicateM_ 1000 $ do
-  nums <- replicateM 4 $ randomRIO (1, 13 :: Integer)
-  putStrLn $ case calc24 nums of
-    Just result -> show nums ++ " -> " ++ result
-    Nothing -> show nums ++ " -> No Solution"
 
 calc24 :: [Integer] -> Maybe String
 calc24 nums =
@@ -37,20 +28,20 @@ split xs 0 = [([], xs)]
 split xs@(h : t) n
   | length xs <= n = [(xs, [])]
   | otherwise =
-    map (\pair -> (fst pair, h : snd pair)) (split t n)
-      ++ map (\pair -> (h : fst pair, snd pair)) (split t (n - 1))
+    map (\(taken, nontaken) -> (taken, h : nontaken)) (split t n)
+      ++ map (\(taken, nontaken) -> (h : taken, nontaken)) (split t (n - 1))
 
 combine :: Number -> Number -> [Number]
 combine (Number x xExpr xOp) (Number y yExpr yOp) =
   [ Number (x + y) (printf "%s + %s" xExpr yExpr) '+',
-    Number (x * y) (printf "%s * %s" (addParentheses xExpr xOp "+-") (addParentheses yExpr yOp "+-")) '*',
-    Number (x / y) (printf "%s / %s" (addParentheses xExpr xOp "+-") (addParentheses yExpr yOp "+-*/")) '/',
-    Number (y / x) (printf "%s / %s" (addParentheses yExpr yOp "+-") (addParentheses xExpr xOp "+-*/")) '/',
+    Number (x * y) (printf "%s * %s" (addParentheses xExpr xOp False) (addParentheses yExpr yOp False)) '*',
+    Number (x / y) (printf "%s / %s" (addParentheses xExpr xOp False) (addParentheses yExpr yOp True)) '/',
+    Number (y / x) (printf "%s / %s" (addParentheses yExpr yOp False) (addParentheses xExpr xOp True)) '/',
     if x > y
-      then Number (x - y) (printf "%s - %s" xExpr (addParentheses yExpr yOp "+-")) '-'
-      else Number (y - x) (printf "%s - %s" yExpr (addParentheses xExpr xOp "+-")) '-'
+      then Number (x - y) (printf "%s - %s" xExpr (addParentheses yExpr yOp False)) '-'
+      else Number (y - x) (printf "%s - %s" yExpr (addParentheses xExpr xOp False)) '-'
   ]
   where
-    addParentheses expr op conditions
-      | op `elem` conditions = "(" ++ expr ++ ")"
+    addParentheses expr op isDenominator
+      | op `elem` "+-" || isDenominator = "(" ++ expr ++ ")"
       | otherwise = expr
