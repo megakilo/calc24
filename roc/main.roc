@@ -32,8 +32,8 @@ main =
         problem = nums |> List.map Num.toStr |> Str.joinWith ","
         result =
             when calc24 nums formula is
-                Ok expr -> "\(problem): \(expr)"
-                _ -> "\(problem): no solution"
+                Ok expr -> "\(problem) -> \(expr)"
+                _ -> "\(problem) -> no solution"
         _ <- prevTask |> Task.await
         Stdout.line result
 
