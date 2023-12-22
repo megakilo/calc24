@@ -1,6 +1,5 @@
 use calc24;
 use rand::Rng;
-use itertools::join;
 
 fn main() {
     let mut rng = rand::thread_rng();
@@ -15,7 +14,6 @@ fn main() {
             nums[j] = x;
         }
         let result = calculator.calc(&nums).unwrap_or("No Solution".to_string());
-        let joined = join(&nums, ", ");
-        println!("{} -> {}", &joined, result);
+        println!("{:?} -> {}", &nums, result);
     }
 }
