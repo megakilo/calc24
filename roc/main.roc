@@ -6,36 +6,32 @@ app "calc24"
     imports [pf.Stdout, pf.Utc, pf.Task, Calc24.{ Operand, buildFormula, calc24 }, rand.Random]
     provides [main] to pf
 
-randomList = \initialSeed, generator, size, count ->
-    List.range { start: At 0, end: Length (size * count) }
-    |> List.walk { seed: initialSeed, numbers: [] } \state, _ ->
-        random = generator state.seed
-        numbers = List.append state.numbers random.value
-        { seed: random.state, numbers }
-    |> .numbers
-    |> List.chunksOf size
-
 main =
-    count = 1000
+    total = 1000
     size = 4
 
-    formula = List.range { start: At 0, end: Length size } |> List.map (\i -> Index i) |> buildFormula
+    indexes = List.range { start: At 0, end: Length size }
+    formula = indexes |> List.map (\i -> Index i) |> buildFormula
 
     ts <- Task.await (Utc.now |> Task.map Utc.toMillisSinceEpoch |> Task.map Num.toU32)
     initialSeed = Random.seed ts
-    generator = Random.i32 1 13
+    rndgen = Random.i32 1 13
 
-    numsList = randomList initialSeed generator size count
+    playGame = \{ count, currentSeed } ->
+        if count == total then
+            Task.ok (Done {})
+        else
+            { seed: nextSeed, xs: nums } =
+                indexes
+                |> List.walk { seed: currentSeed, xs: [] } \{ seed, xs }, _ ->
+                    { value, state } = rndgen seed
+                    { seed: state, xs: List.append xs value }
+            problem = nums |> List.map Num.toStr |> Str.joinWith ","
+            result =
+                when calc24 nums formula is
+                    Ok expr -> "\(problem) -> \(expr)"
+                    _ -> "\(problem) -> no solution"
+            _ <- Stdout.line result |> Task.await
+            Task.ok (Step { count: count + 1, currentSeed: nextSeed })
 
-    solve =
-        prevTask, nums <- List.walk numsList (Task.ok {})
-        problem = nums |> List.map Num.toStr |> Str.joinWith ","
-        result =
-            when calc24 nums formula is
-                Ok expr -> "\(problem) -> \(expr)"
-                _ -> "\(problem) -> no solution"
-        _ <- prevTask |> Task.await
-        Stdout.line result
-
-    _ <- solve |> Task.await
-    Task.ok {}
+    Task.loop { count: 0, currentSeed: initialSeed } playGame
