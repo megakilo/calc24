@@ -130,7 +130,7 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	size := 4
 	calc24 := NewCalc24(size)
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100000; i++ {
 		var nums []int
 		for j := 0; j < size; j++ {
 			nums = append(nums, rand.Intn(13)+1)

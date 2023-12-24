@@ -7,7 +7,7 @@ app "calc24"
     provides [main] to pf
 
 main =
-    total = 1000
+    total = 100000
     size = 4
 
     indexes = List.range { start: At 0, end: Length size }

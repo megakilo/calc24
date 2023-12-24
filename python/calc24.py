@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env pypy3
 
 from enum import Enum
 from dataclasses import dataclass
@@ -96,7 +96,7 @@ class Calc24:
 if __name__ == '__main__':
     size = 4
     calc24 = Calc24(size)
-    for _ in range(1000):
+    for _ in range(100000):
         nums = [random.randint(1, 13) for x in range(size)]
         result = calc24.calc(nums)
         print(f"{nums} -> {result}")
