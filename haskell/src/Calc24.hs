@@ -43,5 +43,5 @@ combine (Number x xExpr xOp) (Number y yExpr yOp) =
   ]
   where
     addParentheses expr op isDenominator
-      | op `elem` "+-" || isDenominator = "(" ++ expr ++ ")"
+      | op `elem` "+-" || (isDenominator && op /= 'X') = "(" ++ expr ++ ")"
       | otherwise = expr
