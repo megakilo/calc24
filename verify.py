@@ -2,23 +2,66 @@
 
 import sys
 
+import ast
+import operator as op
+from fractions import Fraction
+
+# supported operators
+operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv}
+
+def eval_expr(expr):
+    return eval_(ast.parse(expr, mode='eval').body)
+
+def eval_(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, int):
+        return Fraction(node.value)
+    elif isinstance(node, ast.BinOp):
+        left_value = eval_(node.left)
+        right_value = eval_(node.right)
+        return operators[type(node.op)](left_value, right_value)
+    elif isinstance(node, ast.UnaryOp):
+        operand_value = eval_(node.operand)
+        return operators[type(node.op)](operand_value)
+    else:
+        raise TypeError(node)
+        
 total = 0
 correct = 0
-invalid_lines = []
+has_result = 0
+no_result = 0
+invalid = 0
+bad_results = []
+
+target = Fraction(24)
 
 for line in sys.stdin:
-    print(line, end = "")
+    line = line.strip()
+    print(line)
     parts = line.split("->")
     if len(parts) != 2:
-        invalid_lines.append(line)
+        invalid += 1
     else:
-        
+        total += 1
         try:
-            result = eval(parts[1])
-            total += 1
-            if result == 24:
-                 correct += 1
+            result = eval_expr(parts[1].strip())
+            has_result += 1
+            if result == target:
+                correct += 1
+            else:
+                bad_results.append(line)
         except:
+            no_result += 1
             pass
+
 print("=============")
-print(f"Passed result: {correct}/{total}")
+print(f"Total Lines: {total}")
+print(f"Invalid Format: {invalid}")
+print(f"No Result Count: {no_result}")
+if total > 0:
+    print(f"No Result Ratio: {(100 * no_result / total):.2f}%")
+print(f"Has Result Count: {has_result}")
+print(f"Correct Result Count: {correct}")
+if has_result > 0:
+    print(f"Correct Result Ratio: {(100 * correct / has_result):.2f}%")
+if len(bad_results) > 0:
+    print("Bad Results: ", bad_results)
