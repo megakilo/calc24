@@ -1,93 +1,102 @@
 #! /usr/bin/env python3
 
-from fractions import Fraction
+from enum import Enum
+from dataclasses import dataclass
 import random
 
 
-class Number:
-    def __init__(self, num1, num2, op):
-        self.left = num1
-        self.right = num2
-        self.op = op
-        if op == '+':
-            self.value = num1.value + num2.value
-        elif op == '-':
-            self.value = num1.value - num2.value
-        elif op == '*':
-            self.value = num1.value * num2.value
-        elif op == '/':
-            self.value = num1.value / num2.value
+class OpType(Enum):
+    NONE = 0
+    ADD = 1
+    SUBSTRACT = 2
+    MULTIPLY = 3
+    DIVIDE = 4
 
-    @staticmethod
-    def Create(value):
-        x = Number(None, None, 'x')
-        x.value = Fraction(value)
-        return x
 
-    @staticmethod
-    def AddParentheses(node, is_denominator):
-        if node.op in ('+', '-') or (is_denominator and node.op != 'x'):
-            return f"({node})"
+@dataclass
+class Operand:
+    index: int
+    op: OpType = OpType.NONE
+    left: 'Operand' = None
+    right: 'Operand' = None
+
+    def to_string_helper(self, nums, is_denominator=False):
+        if self.op == OpType.ADD or self.op == OpType.SUBSTRACT or (is_denominator and self.op != OpType.NONE):
+            return f"({self.to_string(nums)})"
         else:
-            return node
+            return self.to_string(nums)
 
-    def __str__(self):
-        if self.op == 'x':
-            return str(self.value)
-        if self.op == '+':
-            return f"{self.left} + {self.right}"
-        elif self.op == '-':
-            return f"{self.left} - {Number.AddParentheses(self.right, False)}"
-        elif self.op == '*':
-            return f"{Number.AddParentheses(self.left, False)} * {Number.AddParentheses(self.right, False)}"
-        elif self.op == '/':
-            return f"{Number.AddParentheses(self.left, False)} / {Number.AddParentheses(self.right, True)}"
+    def to_string(self, nums):
+        if self.op == OpType.NONE:
+            return str(nums[self.index])
+        if self.op == OpType.ADD:
+            return f"{self.left.to_string(nums)} + {self.right.to_string(nums)}"
+        elif self.op == OpType.SUBSTRACT:
+            return f"{self.left.to_string(nums)} - {self.right.to_string_helper(nums)}"
+        elif self.op == OpType.MULTIPLY:
+            return f"{self.left.to_string_helper(nums)} * {self.right.to_string_helper(nums)}"
+        elif self.op == OpType.DIVIDE:
+            return f"{self.left.to_string_helper(nums)} / {self.right.to_string_helper(nums, True)}"
 
-    def __repr__(self):
-        return self.__str__()
-
-
-def combine(num1, num2):
-    yield Number(num1, num2, '+')
-    yield Number(num1, num2, '*')
-    if num1.value > num2.value:
-        yield Number(num1, num2, '-')
-    else:
-        yield Number(num2, num1, '-')
-    if num2.value != 0:
-        yield Number(num1, num2, '/')
-    if num1.value != 0:
-        yield Number(num2, num1, '/')
+    def eval(self, nums):
+        if self.op == OpType.NONE:
+            return float(nums[self.index])
+        if self.op == OpType.ADD:
+            return self.left.eval(nums) + self.right.eval(nums)
+        elif self.op == OpType.SUBSTRACT:
+            return self.left.eval(nums) - self.right.eval(nums)
+        elif self.op == OpType.MULTIPLY:
+            return self.left.eval(nums) * self.right.eval(nums)
+        elif self.op == OpType.DIVIDE:
+            return self.left.eval(nums) / self.right.eval(nums)
 
 
-def calc(nodes, target):
-    if len(nodes) == 1:
-        if nodes[0].value == target:
-            return nodes[0]
-        return None
-    for i in range(len(nodes)):
-        for j in range(i+1, len(nodes)):
-            reduced = []
-            for k in range(len(nodes)):
-                if k != i and k != j:
-                    reduced.append(nodes[k])
-            for x in combine(nodes[i], nodes[j]):
-                reduced.append(x)
-                result = calc(reduced, target)
-                if result:
-                    return result
+def combine(op1, op2):
+    return [
+        Operand(-1, OpType.ADD, op1, op2),
+        Operand(-1, OpType.MULTIPLY, op1, op2),
+        Operand(-1, OpType.SUBSTRACT, op1, op2),
+        Operand(-1, OpType.SUBSTRACT, op2, op1),
+        Operand(-1, OpType.DIVIDE, op1, op2),
+        Operand(-1, OpType.DIVIDE, op2, op1),
+    ]
+
+
+def generate_formula(indexes):
+    n = len(indexes)
+    if n == 1:
+        return indexes
+    result = []
+    for i in range(n):
+        for j in range(i+1, n):
+            reduced = [x for k, x in enumerate(indexes) if k != i and k != j]
+            for r in combine(indexes[i], indexes[j]):
+                reduced.append(r)
+                result.extend(generate_formula(reduced))
                 reduced.pop()
-    return None
+    return result
 
-def calc24(numbers):
-    nodes = [Number.Create(x) for x in numbers]
-    result = calc(nodes, 24)
-    if result:
-        return f"{numbers} -> {result}"
-    else:
-        return f"{numbers} -> No Solution"
+
+class Calc24:
+    def __init__(self, n) -> None:
+        indexes = [Operand(i) for i in range(n)]
+        self.__formula = generate_formula(indexes)
+
+    def calc(self, nums) -> str:
+        target = float(24)
+        for f in self.__formula:
+            try:
+                if f.eval(nums) == target:
+                    return f.to_string(nums)
+            except:
+                continue
+        return "No Solution"
+
 
 if __name__ == '__main__':
-    for c in range(1000):
-        numbers = [random.randint(1, 13) for x in range(4)]
-        print(calc24(numbers))
+    size = 4
+    calc24 = Calc24(size)
+    for _ in range(1000):
+        nums = [random.randint(1, 13) for x in range(size)]
+        result = calc24.calc(nums)
+        print(f"{nums} -> {result}")
