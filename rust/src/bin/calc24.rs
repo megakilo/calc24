@@ -13,7 +13,9 @@ fn main() {
             let x = rng.gen_range(1..=13);
             nums[j] = x;
         }
-        let result = calculator.calc(&nums).unwrap_or("No Solution".to_string());
-        println!("{:?} -> {}", &nums, result);
+        match calculator.calc(nums) {
+            None => println!("{:?} -> No Solution", &nums),
+            Some(answer) => println!("{:?} -> {}", &nums, answer),
+        }
     }
 }

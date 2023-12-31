@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub enum OpType {
     Add,
@@ -11,8 +11,8 @@ pub enum Operand {
     Number(usize),
     Expression {
         op: OpType,
-        left: Rc<Operand>,
-        right: Rc<Operand>,
+        left: Arc<Operand>,
+        right: Arc<Operand>,
     },
 }
 
@@ -70,34 +70,34 @@ impl Operand {
     }
 }
 
-fn combine(num1: &Rc<Operand>, num2: &Rc<Operand>) -> [Rc<Operand>; 6] {
+fn combine(num1: &Arc<Operand>, num2: &Arc<Operand>) -> [Arc<Operand>; 6] {
     [
-        Rc::new(Operand::Expression {
+        Arc::new(Operand::Expression {
             op: OpType::Add,
             left: num1.clone(),
             right: num2.clone(),
         }),
-        Rc::new(Operand::Expression {
+        Arc::new(Operand::Expression {
             op: OpType::Multiply,
             left: num1.clone(),
             right: num2.clone(),
         }),
-        Rc::new(Operand::Expression {
+        Arc::new(Operand::Expression {
             op: OpType::Substract,
             left: num1.clone(),
             right: num2.clone(),
         }),
-        Rc::new(Operand::Expression {
+        Arc::new(Operand::Expression {
             op: OpType::Substract,
             left: num2.clone(),
             right: num1.clone(),
         }),
-        Rc::new(Operand::Expression {
+        Arc::new(Operand::Expression {
             op: OpType::Divide,
             left: num1.clone(),
             right: num2.clone(),
         }),
-        Rc::new(Operand::Expression {
+        Arc::new(Operand::Expression {
             op: OpType::Divide,
             left: num2.clone(),
             right: num1.clone(),
@@ -105,7 +105,7 @@ fn combine(num1: &Rc<Operand>, num2: &Rc<Operand>) -> [Rc<Operand>; 6] {
     ]
 }
 
-fn generate_expressions(nums: &[Rc<Operand>]) -> Vec<Rc<Operand>> {
+fn generate_expressions(nums: &[Arc<Operand>]) -> Vec<Arc<Operand>> {
     if nums.len() == 1 {
         return nums.to_vec();
     }
@@ -113,7 +113,7 @@ fn generate_expressions(nums: &[Rc<Operand>]) -> Vec<Rc<Operand>> {
     let n = nums.len();
     for i in 0..n {
         for j in (i + 1)..n {
-            let mut reduced: Vec<Rc<Operand>> = nums
+            let mut reduced: Vec<Arc<Operand>> = nums
                 .iter()
                 .enumerate()
                 .filter(|&(k, _)| k != i && k != j)
@@ -131,22 +131,22 @@ fn generate_expressions(nums: &[Rc<Operand>]) -> Vec<Rc<Operand>> {
 }
 
 pub struct Calc24 {
-    expressions: Vec<Rc<Operand>>,
+    expressions: Vec<Arc<Operand>>,
 }
 
 impl Calc24 {
     pub fn new(n: usize) -> Calc24 {
         let indexes = (0..n)
-            .map(|i| Rc::new(Operand::Number(i)))
-            .collect::<Vec<Rc<Operand>>>();
+            .map(|i| Arc::new(Operand::Number(i)))
+            .collect::<Vec<Arc<Operand>>>();
         let expressions = generate_expressions(&indexes);
         Calc24 { expressions }
     }
 
-    pub fn calc(&self, nums: &[i32]) -> Option<String> {
+    pub fn calc(&self, nums: [i32; 4]) -> Option<String> {
         for e in &self.expressions {
-            if e.eval(nums) == 24_f64 {
-                return Some(e.to_string(nums));
+            if e.eval(&nums) == 24_f64 {
+                return Some(e.to_string(&nums));
             }
         }
         None

@@ -5,5 +5,15 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "calc24"
+path = "src/bin/calc24.rs"
+
+[[bin]]
+name = "calc24_mt"
+path = "src/bin/calc24_mt.rs"
+
 [dependencies]
+futures = "0.3.30"
 rand = "0.8.5"
+tokio = { version = "1.35.1", features = ["full"] }
