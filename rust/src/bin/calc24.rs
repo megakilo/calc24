@@ -5,7 +5,7 @@ fn main() {
     let mut rng = rand::thread_rng();
     const N: usize = 4;
 
-    let calculator = calc24::Calc24::new(N);
+    let calculator = calc24::Calc24::<N>::new();
 
     let mut nums = [0; N];
     for _ in 0..100000 {

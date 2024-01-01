@@ -5,7 +5,11 @@ use rand::Rng;
 use tokio::sync::mpsc;
 use tokio::task;
 
-async fn run(calculator: Arc<calc24::Calc24>, nums: [i32; 4], tx: mpsc::Sender<String>) {
+async fn run<const N: usize>(
+    calculator: Arc<calc24::Calc24<N>>,
+    nums: [i32; N],
+    tx: mpsc::Sender<String>,
+) {
     let answer = match calculator.calc(nums) {
         None => format!("{:?} -> No Solution", nums),
         Some(r) => format!("{:?} -> {}", nums, r),
@@ -19,7 +23,7 @@ async fn main() {
     const N: usize = 4;
     const TOTAL: usize = 100_000;
 
-    let calculator: Arc<calc24::Calc24> = Arc::new(calc24::Calc24::new(N));
+    let calculator = Arc::new(calc24::Calc24::<N>::new());
     let mut nums = [0; N];
     let (tx, mut rx) = mpsc::channel::<String>(100);
     (0..TOTAL).for_each(|_| {

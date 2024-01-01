@@ -130,20 +130,20 @@ fn generate_expressions(nums: &[Arc<Operand>]) -> Vec<Arc<Operand>> {
     result
 }
 
-pub struct Calc24 {
+pub struct Calc24<const N: usize> {
     expressions: Vec<Arc<Operand>>,
 }
 
-impl Calc24 {
-    pub fn new(n: usize) -> Calc24 {
-        let indexes = (0..n)
+impl<const N: usize> Calc24<N> {
+    pub fn new() -> Calc24<N> {
+        let indexes = (0..N)
             .map(|i| Arc::new(Operand::Number(i)))
             .collect::<Vec<Arc<Operand>>>();
         let expressions = generate_expressions(&indexes);
         Calc24 { expressions }
     }
 
-    pub fn calc(&self, nums: [i32; 4]) -> Option<String> {
+    pub fn calc(&self, nums: [i32; N]) -> Option<String> {
         for e in &self.expressions {
             if e.eval(&nums) == 24_f64 {
                 return Some(e.to_string(&nums));
@@ -159,29 +159,29 @@ mod tests {
 
     #[test]
     fn test_basic_3_numbers() {
-        let calculator = Calc24::new(3);
-        let result = calculator.calc(&[2, 3, 4]);
+        let calculator = Calc24::<3>::new();
+        let result = calculator.calc([2, 3, 4]);
         assert_eq!(result.is_some(), true);
     }
 
     #[test]
     fn test_invalid_3_numbers() {
-        let calculator = Calc24::new(3);
-        let result = calculator.calc(&[1, 3, 4]);
+        let calculator = Calc24::<3>::new();
+        let result = calculator.calc([1, 3, 4]);
         assert_eq!(result.is_none(), true);
     }
 
     #[test]
     fn test_basic_4_numbers() {
-        let calculator = Calc24::new(4);
-        let result = calculator.calc(&[1, 2, 3, 4]);
+        let calculator = Calc24::<4>::new();
+        let result = calculator.calc([1, 2, 3, 4]);
         assert_eq!(result.is_some(), true);
     }
 
     #[test]
     fn test_fraction_4_numbers() {
-        let calculator = Calc24::new(4);
-        let result = calculator.calc(&[3, 3, 7, 7]);
+        let calculator = Calc24::<4>::new();
+        let result = calculator.calc([3, 3, 7, 7]);
         assert_eq!(result.is_some(), true);
     }
 }
