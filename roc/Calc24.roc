@@ -1,11 +1,9 @@
-interface Calc24
-    exposes [Operand, buildFormula, calc24]
-    imports []
+module [Operand, buildFormula, calc24]
 
 Operator : [Add, Subtract, Multiply, Divide]
 
 Operand : [
-    Index Nat,
+    Index U64,
     Expression
         {
             operator : Operator,
@@ -31,10 +29,10 @@ toStr = \operand, nums ->
         Index i -> List.get nums i |> Result.withDefault 0 |> Num.toStr
         Expression { operator, left, right } ->
             when operator is
-                Add -> "\(toStr left nums) + \(toStr right nums)"
-                Subtract -> "\(toStr left nums) - \(toWrappedStr right nums Bool.false)"
-                Multiply -> "\(toWrappedStr left nums Bool.false) * \(toWrappedStr right nums Bool.false)"
-                Divide -> "\(toWrappedStr left nums Bool.false) / \(toWrappedStr right nums Bool.true)"
+                Add -> "$(toStr left nums) + $(toStr right nums)"
+                Subtract -> "$(toStr left nums) - $(toWrappedStr right nums Bool.false)"
+                Multiply -> "$(toWrappedStr left nums Bool.false) * $(toWrappedStr right nums Bool.false)"
+                Divide -> "$(toWrappedStr left nums Bool.false) / $(toWrappedStr right nums Bool.true)"
 
 toWrappedStr = \operand, nums, isDenominator ->
     when operand is
@@ -42,8 +40,8 @@ toWrappedStr = \operand, nums, isDenominator ->
         Expression { operator } ->
             result = toStr operand nums
             when operator is
-                Add | Subtract -> "(\(result))"
-                _ -> if isDenominator then "(\(result))" else result
+                Add | Subtract -> "($(result))"
+                _ -> if isDenominator then "($(result))" else result
 
 combine = \op1, op2 -> [
     Expression { left: op1, right: op2, operator: Add },
@@ -60,16 +58,18 @@ buildFormula = \indexes ->
         [_] -> indexes
         _ ->
             reduced =
-                { taken, nontaken } <- split indexes 2 |> List.map
-                { i1, i2 } =
+                split indexes 2
+                |> List.map \{ taken, nontaken } ->
                     when taken is
-                        [a, b] -> { i1: a, i2: b }
+                        [a, b] ->
+                            combine a b
+                            |> List.map \r ->
+                                nontaken |> List.append r |> buildFormula
+
                         _ -> crash "unexpected input"
-                r <- combine i1 i2 |> List.map
-                nontaken |> List.append r |> buildFormula
             reduced |> List.join |> List.join
 
-split : List a, Nat -> List { taken : List a, nontaken : List a }
+split : List a, U64 -> List { taken : List a, nontaken : List a }
 split = \xs, n ->
     when xs is
         [] -> []
