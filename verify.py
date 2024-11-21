@@ -10,20 +10,24 @@ from fractions import Fraction
 operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv}
 
 def eval_expr(expr):
-    return eval_(ast.parse(expr, mode='eval').body)
+    values = []
 
-def eval_(node):
-    if isinstance(node, ast.Constant) and isinstance(node.value, int):
-        return Fraction(node.value)
-    elif isinstance(node, ast.BinOp):
-        left_value = eval_(node.left)
-        right_value = eval_(node.right)
-        return operators[type(node.op)](left_value, right_value)
-    elif isinstance(node, ast.UnaryOp):
-        operand_value = eval_(node.operand)
-        return operators[type(node.op)](operand_value)
-    else:
-        raise TypeError(node)
+    def _eval(node):
+        nonlocal values
+        if isinstance(node, ast.Constant) and isinstance(node.value, int):
+            values.append(node.value)
+            return Fraction(node.value)
+        elif isinstance(node, ast.BinOp):
+            left_value = _eval(node.left)
+            right_value = _eval(node.right)
+            return operators[type(node.op)](left_value, right_value)
+        elif isinstance(node, ast.UnaryOp):
+            operand_value = _eval(node.operand)
+            return operators[type(node.op)](operand_value)
+        else:
+            raise TypeError(node)
+
+    return (_eval(ast.parse(expr, mode='eval').body), values)
         
 total = 0
 correct = 0
@@ -43,9 +47,10 @@ for line in sys.stdin:
     else:
         total += 1
         try:
-            result = eval_expr(parts[1].strip())
+            result, values = eval_expr(parts[1].strip())
             has_result += 1
-            if result == target:
+            inputs = [int(i.strip()) for i in parts[0].split(",")]
+            if result == target and sorted(values) == sorted(inputs):
                 correct += 1
             else:
                 bad_results.append(line)
