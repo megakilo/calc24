@@ -25,6 +25,7 @@
                 cargo
                 rustc
                 rustfmt
+                rust-analyzer
                 zig
                 zls
               ];
