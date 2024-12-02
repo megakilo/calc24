@@ -90,27 +90,38 @@ fn combine(op1: *Operand, op2: *Operand, alloc: std.mem.Allocator) ![6]*Operand 
     return [_]*Operand{ add, mult, sub1, sub2, div1, div2 };
 }
 
-fn generateFormula(indexes: std.ArrayList(*Operand), alloc: std.mem.Allocator) !std.ArrayList(*Operand) {
-    const n = indexes.items.len;
-    var result = std.ArrayList(*Operand).init(alloc);
-    if (n == 1) {
-        try result.appendSlice(indexes.items);
+fn resultCount(comptime N: u8) u32 {
+    if (N == 1) {
+        return 1;
+    } else {
+        return (N - 1) * N / 2 * 6 * resultCount(N - 1);
+    }
+}
+
+fn generateFormula(comptime N: u8, indexes: []*Operand, alloc: std.mem.Allocator) ![resultCount(N)]*Operand {
+    var result: [resultCount(N)]*Operand = undefined;
+    var r: usize = 0;
+    if (N == 1) {
+        result[0] = indexes[0];
         return result;
     }
-    var reduced = std.ArrayList(*Operand).init(alloc);
-    for (0..n) |i| {
-        for ((i + 1)..n) |j| {
-            reduced.clearRetainingCapacity();
-            for (0..n) |k| {
+    var reduced: [N - 1]*Operand = undefined;
+    for (0..N) |i| {
+        for ((i + 1)..N) |j| {
+            var m: u8 = 0;
+            for (0..N) |k| {
                 if (i != k and j != k) {
-                    try reduced.append(indexes.items[k]);
+                    reduced[m] = indexes[k];
+                    m += 1;
                 }
             }
-            for (try combine(indexes.items[i], indexes.items[j], alloc)) |r| {
-                try reduced.append(r);
-                const expanded = try generateFormula(reduced, alloc);
-                try result.appendSlice(expanded.items);
-                _ = reduced.pop();
+            for (try combine(indexes[i], indexes[j], alloc)) |c| {
+                reduced[N - 2] = c;
+                const roots = try generateFormula(N - 1, &reduced, alloc);
+                for (roots) |root| {
+                    result[r] = root;
+                    r += 1;
+                }
             }
         }
     }
@@ -122,13 +133,16 @@ const Calc24 = struct {
     allocator: std.mem.Allocator,
 
     pub fn init(comptime N: u8, alloc: std.mem.Allocator) !Calc24 {
-        var indexes = std.ArrayList(*Operand).init(alloc);
+        var indexes: [N]*Operand = undefined;
         for (0..N) |i| {
             const x = try alloc.create(Operand);
             x.* = .{ .index = i, .op = .None };
-            try indexes.append(x);
+            indexes[i] = x;
         }
-        return .{ .allocator = alloc, .formula = try generateFormula(indexes, alloc) };
+        const roots = try generateFormula(N, &indexes, alloc);
+        var formula = std.ArrayList(*Operand).init(alloc);
+        try formula.appendSlice(&roots);
+        return .{ .allocator = alloc, .formula = formula };
     }
 
     pub fn calc(self: @This(), nums: []u8) !std.ArrayList(u8) {
