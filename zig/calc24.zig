@@ -128,38 +128,34 @@ fn generateFormula(comptime N: u8, indexes: []*Operand, alloc: std.mem.Allocator
     return result;
 }
 
-const Calc24 = struct {
-    formula: std.ArrayList(*Operand),
-    allocator: std.mem.Allocator,
+fn Calc24(comptime N: u8) type {
+    return struct {
+        formula: [resultCount(N)]*Operand,
+        allocator: std.mem.Allocator,
 
-    pub fn init(comptime N: u8, alloc: std.mem.Allocator) !Calc24 {
-        var indexes: [N]*Operand = undefined;
-        for (0..N) |i| {
-            const x = try alloc.create(Operand);
-            x.* = .{ .index = i, .op = .None };
-            indexes[i] = x;
-        }
-        const roots = try generateFormula(N, &indexes, alloc);
-        var formula = std.ArrayList(*Operand).init(alloc);
-        try formula.appendSlice(&roots);
-        return .{ .allocator = alloc, .formula = formula };
-    }
-
-    pub fn calc(self: @This(), nums: []u8) !std.ArrayList(u8) {
-        const target: f64 = 24;
-        var result = std.ArrayList(u8).init(self.allocator);
-        for (self.formula.items) |f| {
-            if (f.eval(nums) == target) {
-                return f.toString(nums, self.allocator);
-                // try result.appendSlice("Found");
-                // return result;
+        pub fn init(alloc: std.mem.Allocator) !Calc24(N) {
+            var indexes: [N]*Operand = undefined;
+            for (0..N) |i| {
+                const x = try alloc.create(Operand);
+                x.* = .{ .index = i, .op = .None };
+                indexes[i] = x;
             }
+            return .{ .allocator = alloc, .formula = try generateFormula(N, &indexes, alloc) };
         }
-        // var result = std.ArrayList(u8).init(self.allocator);
-        try result.appendSlice("No Solution");
-        return result;
-    }
-};
+
+        pub fn calc(self: @This(), nums: []u8) !std.ArrayList(u8) {
+            const target: f64 = 24;
+            var result = std.ArrayList(u8).init(self.allocator);
+            for (self.formula) |f| {
+                if (f.eval(nums) == target) {
+                    return f.toString(nums, self.allocator);
+                }
+            }
+            try result.appendSlice("No Solution");
+            return result;
+        }
+    };
+}
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -176,10 +172,10 @@ pub fn main() !void {
     var prng = std.rand.DefaultPrng.init(seed);
     const rand = prng.random();
 
-    const N: i32 = 4;
+    const N: u8 = 4;
     var nums: [N]u8 = undefined;
     var challenge = std.ArrayList(u8).init(aa);
-    const calc = try Calc24.init(N, aa);
+    const calc = try Calc24(N).init(aa);
     for (0..100000) |_| {
         for (0..N) |i| {
             nums[i] = rand.intRangeAtMost(u8, 1, 13);
