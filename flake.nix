@@ -15,7 +15,7 @@
         in
         {
           devShells.default =
-            pkgs.mkShell {
+            pkgs.mkShell rec {
               buildInputs = with pkgs; [
                 clang
                 git
@@ -30,8 +30,9 @@
                 zls
               ];
 
+              description = (import "${self}/flake.nix").description;
               shellHook = ''
-                export PS1='[\[\033[1;32m\]calc24\[\033[0m\]:\[\033[1;34m\]\w\[\033[0m\]]\$ '
+                export PS1='[\[\033[1;32m\]${description}\[\033[0m\]:\[\033[1;34m\]\w\[\033[0m\]]\$ '
               '';
 
               RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
