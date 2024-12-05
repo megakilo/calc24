@@ -90,7 +90,7 @@ fn Calc24(comptime N: u8) type {
         pool: Pool = undefined,
 
         pub fn init() Calc24(N) {
-            var c = Calc24(N){};
+            var c = Calc24(N){.pool = .{}};
             var indexes: [N]Index = undefined;
             for (0..N) |i| {
                 indexes[i] = c.pool.add(.{ .index = i, .op = .None });
@@ -183,7 +183,8 @@ pub fn main() !void {
     const N: u8 = 4;
     var nums: [N]u8 = undefined;
     var challenge = std.ArrayList(u8).init(aa);
-    const calc = Calc24(N).init();
+    @setEvalBranchQuota(40000);
+    const calc = comptime Calc24(N).init();
     for (0..100000) |_| {
         for (0..N) |i| {
             nums[i] = rand.intRangeAtMost(u8, 1, 13);
