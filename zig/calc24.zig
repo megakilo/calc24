@@ -98,6 +98,22 @@ fn resultCount(comptime N: u8) u32 {
     }
 }
 
+fn List(comptime T: anytype, comptime N: usize) type {
+    return struct {
+        entries: [N]T = undefined,
+        count: usize = 0,
+
+        fn add(self: *@This(), item: T) void {
+            self.entries[self.count] = item;
+            self.count += 1;
+        }
+
+        fn get(self: *@This(), i: usize) T {
+            return self.entries[i];
+        }
+    };
+}
+
 fn generateFormula(comptime N: u8, indexes: []*Operand, alloc: std.mem.Allocator) ![resultCount(N)]*Operand {
     var result: [resultCount(N)]*Operand = undefined;
     var r: usize = 0;
@@ -176,7 +192,7 @@ pub fn main() !void {
     var nums: [N]u8 = undefined;
     var challenge = std.ArrayList(u8).init(aa);
     const calc = try Calc24(N).init(aa);
-    for (0..100000) |_| {
+    for (0..1) |_| {
         for (0..N) |i| {
             nums[i] = rand.intRangeAtMost(u8, 1, 13);
             if (i > 0) {
@@ -188,4 +204,9 @@ pub fn main() !void {
         try stdout.print("{s} -> {s}\n", .{ challenge.items, result.items });
         challenge.clearRetainingCapacity();
     }
+    var list = List(u8, 100){};
+    list.add('a');
+    list.add('b');
+    list.add('c');
+    std.debug.print("{c}\n", .{list.get(1)});
 }
