@@ -8,6 +8,14 @@ const OpType = enum {
     Divide,
 };
 
+const Node = struct {
+    index: usize = 0,
+    op: OpType = .None,
+    left: usize = 0,
+    right: usize = 0,
+};
+
+
 fn List(comptime T: anytype, comptime N: usize) type {
     return struct {
         entries: [N]T = undefined,
@@ -26,26 +34,6 @@ fn List(comptime T: anytype, comptime N: usize) type {
     };
 }
 
-const Node = struct {
-    index: usize = 0,
-    op: OpType = .None,
-    left: usize = 0,
-    right: usize = 0,
-};
-
-const Index = usize;
-const Pool = List(Node, 5000);
-
-fn reduce(op1: Index, op2: Index, pool: *Pool) [6]Index {
-    const add = pool.add(.{ .op = .Add, .left = op1, .right = op2 });
-    const mult = pool.add(.{ .op = .Multiply, .left = op1, .right = op2 });
-    const sub1 = pool.add(.{ .op = .Subtract, .left = op1, .right = op2 });
-    const sub2 = pool.add(.{ .op = .Subtract, .left = op2, .right = op1 });
-    const div1 = pool.add(.{ .op = .Divide, .left = op1, .right = op2 });
-    const div2 = pool.add(.{ .op = .Divide, .left = op2, .right = op1 });
-    return [_]Index{ add, mult, sub1, sub2, div1, div2 };
-}
-
 fn resultCount(comptime N: u8) u32 {
     if (N == 1) {
         return 1;
@@ -54,40 +42,62 @@ fn resultCount(comptime N: u8) u32 {
     }
 }
 
-fn generate(comptime N: u8, indexes: []Index, pool: *Pool) [resultCount(N)]Index {
-    var result: [resultCount(N)]Index = undefined;
-    var r: usize = 0;
+fn nodeCount(comptime N: u8) u32 {
     if (N == 1) {
-        result[0] = indexes[0];
-        return result;
+        return 0;
+    } else {
+        return (N - 1) * N / 2 * 6 * (1 + nodeCount(N - 1));
     }
-    var reduced: [N - 1]Index = undefined;
-    for (0..N) |i| {
-        for ((i + 1)..N) |j| {
-            var m: u8 = 0;
-            for (0..N) |k| {
-                if (i != k and j != k) {
-                    reduced[m] = indexes[k];
-                    m += 1;
-                }
-            }
-            for (reduce(indexes[i], indexes[j], pool)) |c| {
-                reduced[N - 2] = c;
-                const roots = generate(N - 1, &reduced, pool);
-                for (roots) |root| {
-                    result[r] = root;
-                    r += 1;
-                }
-            }
-        }
-    }
-    return result;
 }
 
 fn Calc24(comptime N: u8) type {
+    const Index = usize;
+    const Pool = List(Node, nodeCount(N) + N);
+    const resultSize = resultCount(N);
+
     return struct {
-        formula: [resultCount(N)]Index = undefined,
+        formula: [resultSize]Index = undefined,
         pool: Pool = undefined,
+
+        fn reduce(op1: Index, op2: Index, pool: *Pool) [6]Index {
+            const add = pool.add(.{ .op = .Add, .left = op1, .right = op2 });
+            const mult = pool.add(.{ .op = .Multiply, .left = op1, .right = op2 });
+            const sub1 = pool.add(.{ .op = .Subtract, .left = op1, .right = op2 });
+            const sub2 = pool.add(.{ .op = .Subtract, .left = op2, .right = op1 });
+            const div1 = pool.add(.{ .op = .Divide, .left = op1, .right = op2 });
+            const div2 = pool.add(.{ .op = .Divide, .left = op2, .right = op1 });
+            return [_]Index{ add, mult, sub1, sub2, div1, div2 };
+        }
+
+        fn generate(comptime L: u8, indexes: []Index, pool: *Pool) [resultCount(L)]Index {
+            var result: [resultCount(L)]Index = undefined;
+            var r: usize = 0;
+            if (L == 1) {
+                result[0] = indexes[0];
+                return result;
+            }
+            var reduced: [L - 1]Index = undefined;
+            for (0..L) |i| {
+                for ((i + 1)..L) |j| {
+                    var m: u8 = 0;
+                    for (0..L) |k| {
+                        if (i != k and j != k) {
+                            reduced[m] = indexes[k];
+                            m += 1;
+                        }
+                    }
+                    for (reduce(indexes[i], indexes[j], pool)) |c| {
+                        reduced[L - 2] = c;
+                        const roots = generate(L - 1, &reduced, pool);
+                        for (roots) |root| {
+                            result[r] = root;
+                            r += 1;
+                        }
+                    }
+                }
+            }
+            return result;
+        }
 
         pub fn init() Calc24(N) {
             var c = Calc24(N){.pool = .{}};
