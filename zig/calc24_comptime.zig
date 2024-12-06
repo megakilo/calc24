@@ -131,16 +131,32 @@ fn Calc24(comptime N: u8) type {
 
         fn toString(self: *const @This(), nums: []u8, index: Index, arena: std.mem.Allocator) ![]const u8 {
             const node = self.pool.get(index);
-            return switch (node.op) {
-                .None => std.fmt.allocPrint(arena, "{d}", .{nums[node.index]}),
-                .Add => std.fmt.allocPrint(arena, "{s} + {s}", .{ try self.toString(nums, node.left, arena), try self.toString(nums, node.right, arena) }),
-                .Subtract => std.fmt.allocPrint(arena, "{s} - {s}", .{ try self.toString(nums, node.left, arena), try self.toString(nums, node.right, arena) }),
-                .Multiply => std.fmt.allocPrint(arena, "{s} * {s}", .{ try self.toString(nums, node.left, arena), try self.toString(nums, node.right, arena) }),
-                .Divide => std.fmt.allocPrint(arena, "{s} / {s}", .{ try self.toString(nums, node.left, arena), try self.toString(nums, node.right, arena) }),
-            };
+            switch (node.op) {
+                .None => return std.fmt.allocPrint(arena, "{d}", .{nums[node.index]}),
+                .Add => {
+                    const l = try self.toString(nums, node.left, arena);
+                    const r = try self.toString(nums, node.right, arena);
+                    return std.fmt.allocPrint(arena, "{s} + {s}", .{ l, r });
+                },
+                .Subtract => {
+                    const l = try self.toString(nums, node.left, arena);
+                    const r = try self.toStringWrapped(nums, node.right, false, arena);
+                    return std.fmt.allocPrint(arena, "{s} - {s}", .{ l, r });
+                },
+                .Multiply => {
+                    const l = try self.toStringWrapped(nums, node.left, false, arena);
+                    const r = try self.toStringWrapped(nums, node.right, false, arena);
+                    return std.fmt.allocPrint(arena, "{s} * {s}", .{ l, r });
+                },
+                .Divide => {
+                    const l = try self.toStringWrapped(nums, node.left, false, arena);
+                    const r = try self.toStringWrapped(nums, node.right, true, arena);
+                    return std.fmt.allocPrint(arena, "{s} / {s}", .{ l, r });
+                },
+            }
         }
 
-        fn toStringWrapped(self: *const @This(), nums: []u8, index: Index, arena: std.mem.Allocator, is_denominator: bool) error{AllocPrintError}![]const u8 {
+        fn toStringWrapped(self: *const @This(), nums: []u8, index: Index, is_denominator: bool, arena: std.mem.Allocator) error{OutOfMemory}![]const u8 {
             const r = try self.toString(nums, index, arena);
             const node = self.pool.get(index);
             if (node.op == .Add or node.op == .Subtract or (node.op != .None and is_denominator)) {

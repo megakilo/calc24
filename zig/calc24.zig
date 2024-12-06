@@ -27,77 +27,73 @@ const Operand = struct {
     pub fn toString(
         self: @This(),
         nums: []u8,
-        alloc: std.mem.Allocator,
-    ) !std.ArrayList(u8) {
-        var result = std.ArrayList(u8).init(alloc);
+        arena: std.mem.Allocator,
+    ) ![]const u8 {
         switch (self.op) {
-            .None => try result.writer().print("{d}", .{nums[self.index]}),
+            .None => return std.fmt.allocPrint(arena, "{d}", .{nums[self.index]}),
             .Add => {
-                const l = try self.left.?.toString(nums, alloc);
-                const r = try self.right.?.toString(nums, alloc);
-                try result.writer().print("{s} + {s}", .{ l.items, r.items });
+                const l = try self.left.?.toString(nums, arena);
+                const r = try self.right.?.toString(nums, arena);
+                return std.fmt.allocPrint(arena, "{s} + {s}", .{ l, r });
             },
             .Subtract => {
-                const l = try self.left.?.toString(nums, alloc);
-                const r = try self.right.?.toStringWrapped(nums, false, alloc);
-                try result.writer().print("{s} - {s}", .{ l.items, r.items });
+                const l = try self.left.?.toString(nums, arena);
+                const r = try self.right.?.toStringWrapped(nums, false, arena);
+                return std.fmt.allocPrint(arena, "{s} - {s}", .{ l, r });
             },
             .Multiply => {
-                const l = try self.left.?.toStringWrapped(nums, false, alloc);
-                const r = try self.right.?.toStringWrapped(nums, false, alloc);
-                try result.writer().print("{s} * {s}", .{ l.items, r.items });
+                const l = try self.left.?.toStringWrapped(nums, false, arena);
+                const r = try self.right.?.toStringWrapped(nums, false, arena);
+                return std.fmt.allocPrint(arena, "{s} * {s}", .{ l, r });
             },
             .Divide => {
-                const l = try self.left.?.toStringWrapped(nums, false, alloc);
-                const r = try self.right.?.toStringWrapped(nums, true, alloc);
-                try result.writer().print("{s} / {s}", .{ l.items, r.items });
+                const l = try self.left.?.toStringWrapped(nums, false, arena);
+                const r = try self.right.?.toStringWrapped(nums, true, arena);
+                return std.fmt.allocPrint(arena, "{s} / {s}", .{ l, r });
             },
         }
-        return result;
     }
 
     pub fn toStringWrapped(
         self: @This(),
         nums: []u8,
         is_denominator: bool,
-        alloc: std.mem.Allocator,
-    ) error{ WriteError, OutOfMemory }!std.ArrayList(u8) {
-        var result = std.ArrayList(u8).init(alloc);
-        const r = try self.toString(nums, alloc);
+        arena: std.mem.Allocator,
+    ) error{ OutOfMemory, AllocPrintError }![]const u8 {
+        const r = try self.toString(nums, arena);
         if (self.op == .Add or self.op == .Subtract or (self.op != .None and is_denominator)) {
-            try result.writer().print("({s})", .{r.items});
+            return std.fmt.allocPrint(arena, "({s})", .{r});
         } else {
-            try result.appendSlice(r.items);
+            return r;
         }
-        return result;
     }
 };
 
-fn combine(op1: *Operand, op2: *Operand, alloc: std.mem.Allocator) ![6]*Operand {
-    const add = try alloc.create(Operand);
+fn combine(op1: *Operand, op2: *Operand, arena: std.mem.Allocator) ![6]*Operand {
+    const add = try arena.create(Operand);
     add.* = .{ .op = .Add, .left = op1, .right = op2 };
-    const mult = try alloc.create(Operand);
+    const mult = try arena.create(Operand);
     mult.* = .{ .op = .Multiply, .left = op1, .right = op2 };
-    const sub1 = try alloc.create(Operand);
+    const sub1 = try arena.create(Operand);
     sub1.* = .{ .op = .Subtract, .left = op1, .right = op2 };
-    const sub2 = try alloc.create(Operand);
+    const sub2 = try arena.create(Operand);
     sub2.* = .{ .op = .Subtract, .left = op2, .right = op1 };
-    const div1 = try alloc.create(Operand);
+    const div1 = try arena.create(Operand);
     div1.* = .{ .op = .Divide, .left = op1, .right = op2 };
-    const div2 = try alloc.create(Operand);
+    const div2 = try arena.create(Operand);
     div2.* = .{ .op = .Divide, .left = op2, .right = op1 };
 
     return [_]*Operand{ add, mult, sub1, sub2, div1, div2 };
 }
 
-fn generateFormula(indexes: std.ArrayList(*Operand), alloc: std.mem.Allocator) !std.ArrayList(*Operand) {
+fn generateFormula(indexes: std.ArrayList(*Operand), arena: std.mem.Allocator) !std.ArrayList(*Operand) {
     const n = indexes.items.len;
-    var result = std.ArrayList(*Operand).init(alloc);
+    var result = std.ArrayList(*Operand).init(arena);
     if (n == 1) {
         try result.appendSlice(indexes.items);
         return result;
     }
-    var reduced = std.ArrayList(*Operand).init(alloc);
+    var reduced = std.ArrayList(*Operand).init(arena);
     for (0..n) |i| {
         for ((i + 1)..n) |j| {
             reduced.clearRetainingCapacity();
@@ -106,9 +102,9 @@ fn generateFormula(indexes: std.ArrayList(*Operand), alloc: std.mem.Allocator) !
                     try reduced.append(indexes.items[k]);
                 }
             }
-            for (try combine(indexes.items[i], indexes.items[j], alloc)) |r| {
+            for (try combine(indexes.items[i], indexes.items[j], arena)) |r| {
                 try reduced.append(r);
-                const expanded = try generateFormula(reduced, alloc);
+                const expanded = try generateFormula(reduced, arena);
                 try result.appendSlice(expanded.items);
                 _ = reduced.pop();
             }
@@ -119,31 +115,26 @@ fn generateFormula(indexes: std.ArrayList(*Operand), alloc: std.mem.Allocator) !
 
 const Calc24 = struct {
     formula: std.ArrayList(*Operand),
-    allocator: std.mem.Allocator,
+    arena: std.mem.Allocator,
 
-    pub fn init(comptime N: u8, alloc: std.mem.Allocator) !Calc24 {
-        var indexes = std.ArrayList(*Operand).init(alloc);
+    pub fn init(comptime N: u8, arena: std.mem.Allocator) !Calc24 {
+        var indexes = std.ArrayList(*Operand).init(arena);
         for (0..N) |i| {
-            const x = try alloc.create(Operand);
+            const x = try arena.create(Operand);
             x.* = .{ .index = i, .op = .None };
             try indexes.append(x);
         }
-        return .{ .allocator = alloc, .formula = try generateFormula(indexes, alloc) };
+        return .{ .arena = arena, .formula = try generateFormula(indexes, arena) };
     }
 
-    pub fn calc(self: @This(), nums: []u8) !std.ArrayList(u8) {
+    pub fn calc(self: @This(), nums: []u8) ![]const u8 {
         const target: f64 = 24;
-        var result = std.ArrayList(u8).init(self.allocator);
         for (self.formula.items) |f| {
             if (f.eval(nums) == target) {
-                return f.toString(nums, self.allocator);
-                // try result.appendSlice("Found");
-                // return result;
+                return f.toString(nums, self.arena);
             }
         }
-        // var result = std.ArrayList(u8).init(self.allocator);
-        try result.appendSlice("No Solution");
-        return result;
+        return "No Solution";
     }
 };
 
@@ -175,7 +166,7 @@ pub fn main() !void {
             try challenge.writer().print("{d}", .{nums[i]});
         }
         const result = try calc.calc(&nums);
-        try stdout.print("{s} -> {s}\n", .{ challenge.items, result.items });
+        try stdout.print("{s} -> {s}\n", .{ challenge.items, result });
         challenge.clearRetainingCapacity();
     }
 }
