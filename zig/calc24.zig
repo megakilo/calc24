@@ -15,7 +15,6 @@ const Node = struct {
     right: usize = 0,
 };
 
-
 fn List(comptime T: anytype, comptime N: usize) type {
     return struct {
         entries: [N]T = undefined,
@@ -100,7 +99,7 @@ fn Calc24(comptime N: u8) type {
         }
 
         pub fn init() Calc24(N) {
-            var c = Calc24(N){.pool = .{}};
+            var c = Calc24(N){ .pool = .{} };
             var indexes: [N]Index = undefined;
             for (0..N) |i| {
                 indexes[i] = c.pool.add(.{ .index = i, .op = .None });
@@ -109,16 +108,14 @@ fn Calc24(comptime N: u8) type {
             return c;
         }
 
-        pub fn calc(self: *const @This(), nums: []u8, aa: std.mem.Allocator) !std.ArrayList(u8) {
+        pub fn calc(self: *const @This(), nums: []u8, arena: std.mem.Allocator) ![]const u8 {
             const target: f64 = 24;
-            var result = std.ArrayList(u8).init(aa);
             for (self.formula) |f| {
                 if (self.eval(nums, f) == target) {
-                    return self.toString(nums, f, aa);
+                    return self.toString(nums, f, arena);
                 }
             }
-            try result.appendSlice("No Solution");
-            return result;
+            return "No Solution";
         }
 
         fn eval(self: *const @This(), nums: []u8, index: Index) f64 {
@@ -132,45 +129,25 @@ fn Calc24(comptime N: u8) type {
             };
         }
 
-        fn toString(self: *const @This(), nums: []u8, index: Index, alloc: std.mem.Allocator) !std.ArrayList(u8) {
-            var result = std.ArrayList(u8).init(alloc);
+        fn toString(self: *const @This(), nums: []u8, index: Index, arena: std.mem.Allocator) ![]const u8 {
             const node = self.pool.get(index);
-            switch (node.op) {
-                .None => try result.writer().print("{d}", .{nums[node.index]}),
-                .Add => {
-                    const l = try self.toString(nums, node.left, alloc);
-                    const r = try self.toString(nums, node.right, alloc);
-                    try result.writer().print("{s} + {s}", .{ l.items, r.items });
-                },
-                .Subtract => {
-                    const l = try self.toString(nums, node.left, alloc);
-                    const r = try self.toStringWrapped(nums, node.right, alloc, false);
-                    try result.writer().print("{s} - {s}", .{ l.items, r.items });
-                },
-                .Multiply => {
-                    const l = try self.toStringWrapped(nums, node.left, alloc, false);
-                    const r = try self.toStringWrapped(nums, node.right, alloc, false);
-                    try result.writer().print("{s} * {s}", .{ l.items, r.items });
-                },
-                .Divide => {
-                    const l = try self.toStringWrapped(nums, node.left, alloc, false);
-                    const r = try self.toStringWrapped(nums, node.right, alloc, true);
-                    try result.writer().print("{s} / {s}", .{ l.items, r.items });
-                },
-            }
-            return result;
+            return switch (node.op) {
+                .None => std.fmt.allocPrint(arena, "{d}", .{nums[node.index]}),
+                .Add => std.fmt.allocPrint(arena, "{s} + {s}", .{ try self.toString(nums, node.left, arena), try self.toString(nums, node.right, arena) }),
+                .Subtract => std.fmt.allocPrint(arena, "{s} - {s}", .{ try self.toString(nums, node.left, arena), try self.toString(nums, node.right, arena) }),
+                .Multiply => std.fmt.allocPrint(arena, "{s} * {s}", .{ try self.toString(nums, node.left, arena), try self.toString(nums, node.right, arena) }),
+                .Divide => std.fmt.allocPrint(arena, "{s} / {s}", .{ try self.toString(nums, node.left, arena), try self.toString(nums, node.right, arena) }),
+            };
         }
 
-        fn toStringWrapped(self: *const @This(), nums: []u8, index: Index, alloc: std.mem.Allocator, is_denominator: bool) error{ WriteError, OutOfMemory }!std.ArrayList(u8) {
-            var result = std.ArrayList(u8).init(alloc);
-            const r = try self.toString(nums, index, alloc);
+        fn toStringWrapped(self: *const @This(), nums: []u8, index: Index, arena: std.mem.Allocator, is_denominator: bool) error{AllocPrintError}![]const u8 {
+            const r = try self.toString(nums, index, arena);
             const node = self.pool.get(index);
             if (node.op == .Add or node.op == .Subtract or (node.op != .None and is_denominator)) {
-                try result.writer().print("({s})", .{r.items});
+                return std.fmt.allocPrint(arena, "({s})", .{r});
             } else {
-                try result.appendSlice(r.items);
+                return r;
             }
-            return result;
         }
     };
 }
@@ -204,7 +181,7 @@ pub fn main() !void {
             try challenge.writer().print("{d}", .{nums[i]});
         }
         const result = try calc.calc(&nums, aa);
-        try stdout.print("{s} -> {s}\n", .{ challenge.items, result.items });
+        try stdout.print("{s} -> {s}\n", .{ challenge.items, result });
         challenge.clearRetainingCapacity();
     }
 }
