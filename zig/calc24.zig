@@ -113,7 +113,7 @@ fn generateFormula(indexes: std.ArrayList(*Operand), arena: std.mem.Allocator) !
     return result;
 }
 
-const Calc24 = struct {
+pub const Calc24 = struct {
     formula: std.ArrayList(*Operand),
     arena: std.mem.Allocator,
 

@@ -49,7 +49,7 @@ fn nodeCount(comptime N: u8) u32 {
     }
 }
 
-fn Calc24(comptime N: u8) type {
+pub fn Calc24(comptime N: u8) type {
     const Index = usize;
     const Pool = List(Node, nodeCount(N) + N);
     const resultSize = resultCount(N);
