@@ -2,7 +2,7 @@ const std = @import("std");
 const expect = std.testing.expect;
 const expectEqualStrings = std.testing.expectEqualStrings;
 
-const calc24 = @import("./calc24.zig");
+const calc24 = @import("calc24.zig");
 
 test "Basic3Numbers" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
