@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use calc24;
+use calc24::lib::core::Calc24;
 use rand::Rng;
 use tokio::task;
 
@@ -10,7 +10,7 @@ async fn main() {
     const N: usize = 4;
     const TOTAL: usize = 100_000;
 
-    let calculator = Arc::new(calc24::Calc24::<N>::new());
+    let calculator = Arc::new(Calc24::<N>::new());
     let mut nums = [0; N];
     let handles: Vec<task::JoinHandle<String>> = (0..TOTAL)
         .map(|_| {
